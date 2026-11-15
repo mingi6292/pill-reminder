@@ -24,8 +24,8 @@
 ## 진행 상황
 - [x] `android-starter` 템플릿 복사, 패키지 `com.mg.pillreminder`로 변경, minSdk 26
 - [x] 설계 문서 작성
-- [ ] GitHub push 후 CI 통과 확인
-- [ ] `ReminderTimeCalculator` + 단위 테스트
+- [x] GitHub push 후 CI 통과 확인
+- [x] `ReminderTimeCalculator` + 단위 테스트
 - [ ] Hilt + Room
 - [ ] 약 등록 화면
 - [ ] AlarmManager 예약, 알림, BootReceiver
