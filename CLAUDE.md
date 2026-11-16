@@ -26,7 +26,7 @@
 - [x] 설계 문서 작성
 - [x] GitHub push 후 CI 통과 확인
 - [x] `ReminderTimeCalculator` + 단위 테스트
-- [ ] Hilt + Room
+- [x] Hilt + Room
 - [ ] 약 등록 화면
 - [ ] AlarmManager 예약, 알림, BootReceiver
 - [ ] 권한 처리

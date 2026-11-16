@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.convention.android.application)
     alias(libs.plugins.convention.android.application.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -23,6 +26,11 @@ android {
     }
 }
 
+room {
+    // 2차에 DoseRecord를 추가할 때 마이그레이션을 검증하려고 스키마를 커밋한다.
+    schemaDirectory("$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -30,6 +38,13 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
