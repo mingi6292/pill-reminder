@@ -20,4 +20,7 @@ interface ReminderDao {
 
     @Query("UPDATE reminders SET nextTriggerAt = :nextTriggerAt WHERE id = :reminderId")
     suspend fun updateNextTriggerAt(reminderId: Long, nextTriggerAt: Long)
+
+    @Query("DELETE FROM reminders WHERE id = :reminderId")
+    suspend fun deleteById(reminderId: Long)
 }

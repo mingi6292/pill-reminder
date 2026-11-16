@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 알림 small icon은 흰색 단색이어야 해서 런처 아이콘과 따로 둔다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M4.22,11.29l7.07,-7.07c2.34,-2.34 6.14,-2.34 8.49,0c2.34,2.34 2.34,6.14 0,8.49l-7.07,7.07c-2.34,2.34 -6.14,2.34 -8.49,0C1.88,17.44 1.88,13.64 4.22,11.29zM5.64,12.71c-1.56,1.56 -1.56,4.09 0,5.66c1.56,1.56 4.09,1.56 5.66,0l3.54,-3.54L9.17,9.17L5.64,12.71z" />
+</vector>

@@ -22,6 +22,9 @@ interface MedicineDao {
         return medicineId
     }
 
+    @Query("SELECT * FROM medicines WHERE id = :medicineId")
+    suspend fun findById(medicineId: Long): MedicineEntity?
+
     @Query("DELETE FROM medicines WHERE id = :medicineId")
     suspend fun deleteById(medicineId: Long)
 

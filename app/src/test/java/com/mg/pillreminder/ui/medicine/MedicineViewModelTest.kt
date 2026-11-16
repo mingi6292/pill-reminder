@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
+import com.mg.pillreminder.fake.FakeAlarmScheduler
 import com.mg.pillreminder.fake.FakeMedicineRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,6 +28,7 @@ import java.time.ZoneOffset
 class MedicineViewModelTest {
 
     private val repository = FakeMedicineRepository()
+    private val alarmScheduler = FakeAlarmScheduler()
     private val clock = Clock.fixed(Instant.parse("2026-11-16T00:00:00Z"), ZoneOffset.UTC)
     private lateinit var viewModel: MedicineViewModel
 
@@ -35,8 +37,8 @@ class MedicineViewModelTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         viewModel = MedicineViewModel(
             ObserveMedicinesUseCase(repository),
-            AddDailyMedicineUseCase(repository, clock),
-            DeleteMedicineUseCase(repository),
+            AddDailyMedicineUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
+            DeleteMedicineUseCase(repository, repository.reminderRepository, alarmScheduler),
         )
     }
 

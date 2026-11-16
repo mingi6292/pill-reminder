@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 interface MedicineRepository {
     fun observeWithNextReminder(): Flow<List<MedicineWithNextReminder>>
 
+    suspend fun find(medicineId: Long): Medicine?
+
     /** 약과 알림을 함께 저장하고 새 약 id를 돌려준다. medicine.id, reminder.id, reminder.medicineId는 무시한다. */
     suspend fun addWithReminder(medicine: Medicine, reminder: Reminder): Long
 

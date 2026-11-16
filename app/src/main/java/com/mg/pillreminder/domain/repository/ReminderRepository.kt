@@ -14,4 +14,6 @@ interface ReminderRepository {
     suspend fun getByMedicine(medicineId: Long): List<Reminder>
 
     suspend fun updateNextTriggerAt(reminderId: Long, nextTriggerAt: Instant)
+
+    suspend fun delete(reminderId: Long)
 }

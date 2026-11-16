@@ -23,4 +23,6 @@ class ReminderRepositoryImpl @Inject constructor(
 
     override suspend fun updateNextTriggerAt(reminderId: Long, nextTriggerAt: Instant) =
         reminderDao.updateNextTriggerAt(reminderId, nextTriggerAt.toEpochMilli())
+
+    override suspend fun delete(reminderId: Long) = reminderDao.deleteById(reminderId)
 }
