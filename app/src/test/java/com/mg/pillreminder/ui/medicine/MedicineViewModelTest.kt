@@ -2,11 +2,13 @@ package com.mg.pillreminder.ui.medicine
 
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import com.mg.pillreminder.domain.permission.PermissionStatus
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
 import com.mg.pillreminder.fake.FakeAlarmScheduler
 import com.mg.pillreminder.fake.FakeMedicineRepository
+import com.mg.pillreminder.fake.FakePermissionChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -15,7 +17,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -29,6 +33,7 @@ class MedicineViewModelTest {
 
     private val repository = FakeMedicineRepository()
     private val alarmScheduler = FakeAlarmScheduler()
+    private val permissionChecker = FakePermissionChecker()
     private val clock = Clock.fixed(Instant.parse("2026-11-16T00:00:00Z"), ZoneOffset.UTC)
     private lateinit var viewModel: MedicineViewModel
 
@@ -39,6 +44,7 @@ class MedicineViewModelTest {
             ObserveMedicinesUseCase(repository),
             AddDailyMedicineUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
             DeleteMedicineUseCase(repository, repository.reminderRepository, alarmScheduler),
+            permissionChecker,
         )
     }
 
@@ -80,6 +86,38 @@ class MedicineViewModelTest {
             viewModel.deleteMedicine(id)
 
             assertEquals(emptyList<MedicineItem>(), awaitItem().medicines)
+        }
+    }
+
+    @Test
+    fun `알림이 꺼진 채 첫 약을 등록하면 알림 배너가 뜬다`() = runTest {
+        permissionChecker.status = PermissionStatus(notificationsAllowed = false, exactAlarmsAllowed = true)
+        viewModel.refreshPermissions()
+
+        viewModel.uiState.test {
+            assertTrue(awaitLoaded().askNotificationOnAdd)
+
+            viewModel.addMedicine("비타민", LocalTime.of(8, 0))
+
+            val state = awaitItem()
+            assertEquals(PermissionBanner.Notification, state.permissionBanner)
+            assertFalse(state.askNotificationOnAdd)
+        }
+    }
+
+    @Test
+    fun `권한을 다시 읽으면 배너가 갱신된다`() = runTest {
+        permissionChecker.status = PermissionStatus(notificationsAllowed = true, exactAlarmsAllowed = false)
+        viewModel.refreshPermissions()
+        viewModel.addMedicine("비타민", LocalTime.of(8, 0))
+
+        viewModel.uiState.test {
+            assertEquals(PermissionBanner.ExactAlarm, awaitLoaded().permissionBanner)
+
+            permissionChecker.status = PermissionStatus(notificationsAllowed = true, exactAlarmsAllowed = true)
+            viewModel.refreshPermissions()
+
+            assertNull(awaitItem().permissionBanner)
         }
     }
 

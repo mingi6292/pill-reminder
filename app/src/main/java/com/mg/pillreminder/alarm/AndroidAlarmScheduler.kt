@@ -21,7 +21,8 @@ class AndroidAlarmScheduler @Inject constructor(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()) {
             alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation)
         } else {
-            // 정확한 알람 권한이 없으면 조금 늦더라도 울리게 한다. 권한 안내는 권한 처리 단계에서 한다.
+            // 정확한 알람 권한이 없으면 조금 늦더라도 울리게 한다.
+            // 목록 화면 배너로 권한을 안내하고, 권한을 받으면 ExactAlarmPermissionReceiver가 다시 예약한다.
             alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, operation)
         }
     }
