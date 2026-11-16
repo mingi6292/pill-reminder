@@ -37,3 +37,5 @@
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`
 - CI: `.github/workflows/ci.yml` (assembleDebug, testDebugUnitTest, lintDebug)
+- CD: `v*` 태그 push → `.github/workflows/release.yml`이 서명된 APK를 GitHub Release에 올린다. 예: `git tag v0.1.0 && git push origin v0.1.0`
+  - Secrets: `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`
