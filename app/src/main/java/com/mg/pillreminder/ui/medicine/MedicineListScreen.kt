@@ -47,13 +47,18 @@ fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // 설정 화면에서 권한을 바꾸고 돌아올 수 있어 화면에 돌아올 때마다 다시 읽는다.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPermissions() }
-    val permissionActions = rememberPermissionActions(onResult = viewModel::refreshPermissions)
+    val permissionActions = rememberPermissionActions(
+        onAskStarted = viewModel::onNotificationRequestStarted,
+        onAskFinished = viewModel::onNotificationRequestFinished,
+        onBannerRequestFinished = viewModel::refreshPermissions,
+    )
 
     MedicineListContent(
         uiState = uiState,
         onAddMedicine = { name, time ->
-            viewModel.addMedicine(name, time)
+            // 약이 저장되기 전에 요청 중 상태를 켜야 배너가 대화상자 뒤에 잠깐도 보이지 않는다.
             if (uiState.askNotificationOnAdd) permissionActions.askNotification()
+            viewModel.addMedicine(name, time)
         },
         onDeleteMedicine = viewModel::deleteMedicine,
         onPermissionBannerClick = permissionActions::resolve,

@@ -106,6 +106,23 @@ class MedicineViewModelTest {
     }
 
     @Test
+    fun `권한 대화상자가 떠 있는 동안은 배너를 숨기고 닫히면 띄운다`() = runTest {
+        permissionChecker.status = PermissionStatus(notificationsAllowed = false, exactAlarmsAllowed = true)
+        viewModel.refreshPermissions()
+
+        viewModel.uiState.test {
+            awaitLoaded()
+            viewModel.onNotificationRequestStarted()
+            viewModel.addMedicine("비타민", LocalTime.of(8, 0))
+            assertNull(expectMostRecentItem().permissionBanner)
+
+            viewModel.onNotificationRequestFinished()
+
+            assertEquals(PermissionBanner.Notification, awaitItem().permissionBanner)
+        }
+    }
+
+    @Test
     fun `권한을 다시 읽으면 배너가 갱신된다`() = runTest {
         permissionChecker.status = PermissionStatus(notificationsAllowed = true, exactAlarmsAllowed = false)
         viewModel.refreshPermissions()

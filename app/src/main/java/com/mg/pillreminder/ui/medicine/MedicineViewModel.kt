@@ -28,13 +28,29 @@ class MedicineViewModel @Inject constructor(
 
     private val permissionStatus = MutableStateFlow(permissionChecker.status())
 
-    val uiState: StateFlow<MedicineUiState> = combine(observeMedicines(), permissionStatus) { list, status ->
-        toUiState(list, status)
+    // 화면 회전으로 Activity가 다시 만들어져도 대화상자는 그대로라 ViewModel이 기억한다.
+    private val askingNotification = MutableStateFlow(false)
+
+    val uiState: StateFlow<MedicineUiState> = combine(
+        observeMedicines(),
+        permissionStatus,
+        askingNotification,
+    ) { list, status, asking ->
+        toUiState(list, status, asking)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), MedicineUiState())
 
     /** 설정 화면이나 권한 요청에서 돌아왔을 때 부른다. */
     fun refreshPermissions() {
         permissionStatus.value = permissionChecker.status()
+    }
+
+    fun onNotificationRequestStarted() {
+        askingNotification.value = true
+    }
+
+    fun onNotificationRequestFinished() {
+        askingNotification.value = false
+        refreshPermissions()
     }
 
     fun addMedicine(name: String, time: LocalTime) {
@@ -47,12 +63,16 @@ class MedicineViewModel @Inject constructor(
         viewModelScope.launch { deleteMedicineUseCase(medicineId) }
     }
 
-    private fun toUiState(list: List<MedicineWithNextReminder>, status: PermissionStatus): MedicineUiState {
+    private fun toUiState(
+        list: List<MedicineWithNextReminder>,
+        status: PermissionStatus,
+        askingNotification: Boolean,
+    ): MedicineUiState {
         val hasMedicines = list.isNotEmpty()
         return MedicineUiState(
             isLoading = false,
             medicines = list.map { it.toItem() },
-            permissionBanner = permissionBannerFor(status, hasMedicines),
+            permissionBanner = permissionBannerFor(status, hasMedicines, askingNotification),
             askNotificationOnAdd = shouldAskNotificationOnAdd(status, hasMedicines),
         )
     }
