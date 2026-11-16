@@ -32,7 +32,7 @@
 - [x] 약 등록 화면
 - [x] AlarmManager 예약, 알림, BootReceiver
 - [x] 권한 처리
-- [ ] README 정리
+- [x] README 정리
 
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`
