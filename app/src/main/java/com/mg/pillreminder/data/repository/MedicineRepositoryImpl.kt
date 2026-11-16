@@ -5,6 +5,7 @@ import com.mg.pillreminder.data.local.toDomain
 import com.mg.pillreminder.data.local.toEntity
 import com.mg.pillreminder.domain.model.Medicine
 import com.mg.pillreminder.domain.model.MedicineWithNextReminder
+import com.mg.pillreminder.domain.model.Reminder
 import com.mg.pillreminder.domain.repository.MedicineRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,7 +18,8 @@ class MedicineRepositoryImpl @Inject constructor(
     override fun observeWithNextReminder(): Flow<List<MedicineWithNextReminder>> =
         medicineDao.observeWithNextTrigger().map { rows -> rows.map { it.toDomain() } }
 
-    override suspend fun add(medicine: Medicine): Long = medicineDao.insert(medicine.toEntity())
+    override suspend fun addWithReminder(medicine: Medicine, reminder: Reminder): Long =
+        medicineDao.insertWithReminder(medicine.toEntity(), reminder.toEntity())
 
     override suspend fun delete(medicineId: Long) = medicineDao.deleteById(medicineId)
 }

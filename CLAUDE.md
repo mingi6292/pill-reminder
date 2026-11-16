@@ -16,6 +16,8 @@
 4. 에러 로그를 받으면 원인 한 줄 + 고친 코드로 답한다.
 5. 시간 계산 같은 테스트 가능한 로직은 `domain/`에 순수 Kotlin으로 두고 `Clock`을 주입받는다.
 6. 화면, 알림 버튼, 음성, AppFunctions 같은 입구에는 비즈니스 로직을 두지 않고 UseCase를 호출한다.
+7. 단계마다 `feat/<작업>` 브랜치 worktree에서 작업하고 PR로 main에 merge한다. main에 직접 커밋하지 않는다. merge는 사용자가 GitHub UI에서 한다.
+8. 커밋 메시지와 PR 본문에 `Co-Authored-By:` 줄이나 "Generated with Claude Code" 같은 attribution 문구를 넣지 않는다.
 
 ## 일정
 - 1차 마감 11/8(일): 약 등록 화면, 매일 정해진 시각 알림, 단위 테스트, GitHub Actions CI, README
@@ -27,7 +29,7 @@
 - [x] GitHub push 후 CI 통과 확인
 - [x] `ReminderTimeCalculator` + 단위 테스트
 - [x] Hilt + Room
-- [ ] 약 등록 화면
+- [x] 약 등록 화면
 - [ ] AlarmManager 예약, 알림, BootReceiver
 - [ ] 권한 처리
 - [ ] README 정리

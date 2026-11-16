@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">PillReminder</string>
+    <string name="medicine_list_title">내 약</string>
+    <string name="medicine_list_empty">등록한 약이 없어요.\n약 추가 버튼으로 등록하세요.</string>
+    <string name="medicine_next_reminder">다음 알림 %1$s</string>
+    <string name="medicine_no_reminder">예약된 알림 없음</string>
+    <string name="medicine_add">약 추가</string>
+    <string name="medicine_delete">삭제</string>
+    <string name="medicine_name_label">약 이름</string>
+    <string name="medicine_save">저장</string>
 </resources>
