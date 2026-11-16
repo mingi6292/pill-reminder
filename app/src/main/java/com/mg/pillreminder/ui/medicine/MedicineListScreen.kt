@@ -1,6 +1,7 @@
 package com.mg.pillreminder.ui.medicine
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -29,6 +30,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mg.pillreminder.R
 import com.mg.pillreminder.ui.theme.PillReminderTheme
@@ -42,10 +45,23 @@ private val NEXT_REMINDER_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPatter
 @Composable
 fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // 설정 화면에서 권한을 바꾸고 돌아올 수 있어 화면에 돌아올 때마다 다시 읽는다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPermissions() }
+    val permissionActions = rememberPermissionActions(
+        onAskStarted = viewModel::onNotificationRequestStarted,
+        onAskFinished = viewModel::onNotificationRequestFinished,
+        onBannerRequestFinished = viewModel::refreshPermissions,
+    )
+
     MedicineListContent(
         uiState = uiState,
-        onAddMedicine = viewModel::addMedicine,
+        onAddMedicine = { name, time ->
+            // 약이 저장되기 전에 요청 중 상태를 켜야 배너가 대화상자 뒤에 잠깐도 보이지 않는다.
+            if (uiState.askNotificationOnAdd) permissionActions.askNotification()
+            viewModel.addMedicine(name, time)
+        },
         onDeleteMedicine = viewModel::deleteMedicine,
+        onPermissionBannerClick = permissionActions::resolve,
     )
 }
 
@@ -55,6 +71,7 @@ fun MedicineListContent(
     uiState: MedicineUiState,
     onAddMedicine: (name: String, time: LocalTime) -> Unit,
     onDeleteMedicine: (medicineId: Long) -> Unit,
+    onPermissionBannerClick: (PermissionBanner) -> Unit,
 ) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
 
@@ -68,7 +85,12 @@ fun MedicineListContent(
             )
         },
     ) { innerPadding ->
-        MedicineListBody(uiState, onDeleteMedicine, innerPadding)
+        Column(Modifier.padding(top = innerPadding.calculateTopPadding())) {
+            uiState.permissionBanner?.let { banner ->
+                PermissionBannerCard(banner, onClick = { onPermissionBannerClick(banner) })
+            }
+            MedicineListBody(uiState, onDeleteMedicine, PaddingValues(bottom = innerPadding.calculateBottomPadding()))
+        }
     }
 
     if (showAddSheet) {
@@ -138,9 +160,11 @@ private fun MedicineListContentPreview() {
                     MedicineItem(1, "비타민", Instant.parse("2026-11-16T23:00:00Z")),
                     MedicineItem(2, "유산균", null),
                 ),
+                permissionBanner = PermissionBanner.ExactAlarm,
             ),
             onAddMedicine = { _, _ -> },
             onDeleteMedicine = {},
+            onPermissionBannerClick = {},
         )
     }
 }
