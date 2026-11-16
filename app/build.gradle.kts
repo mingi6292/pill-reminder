@@ -6,18 +6,37 @@ plugins {
     alias(libs.plugins.room)
 }
 
+// 서명 키는 저장소에 두지 않고 CI(release.yml)가 Secrets에서 복원해 환경변수로 넘긴다.
+// 로컬처럼 값이 없으면 서명 없는 release APK가 만들어진다.
+val releaseKeystorePath: String? = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
+
 android {
     namespace = "com.mg.pillreminder"
 
     defaultConfig {
         applicationId = "com.mg.pillreminder"
-        versionCode = 1
-        versionName = "1.0"
+        // release.yml이 -PversionCode=<run 번호> -PversionName=<태그>로 넘긴다.
+        versionCode = providers.gradleProperty("versionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("versionName").orNull ?: "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseKeystorePath != null) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (releaseKeystorePath != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
