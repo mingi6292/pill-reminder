@@ -18,6 +18,8 @@ class MedicineRepositoryImpl @Inject constructor(
     override fun observeWithNextReminder(): Flow<List<MedicineWithNextReminder>> =
         medicineDao.observeWithNextTrigger().map { rows -> rows.map { it.toDomain() } }
 
+    override suspend fun find(medicineId: Long): Medicine? = medicineDao.findById(medicineId)?.toDomain()
+
     override suspend fun addWithReminder(medicine: Medicine, reminder: Reminder): Long =
         medicineDao.insertWithReminder(medicine.toEntity(), reminder.toEntity())
 

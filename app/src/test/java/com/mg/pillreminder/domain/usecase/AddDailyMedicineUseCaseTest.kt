@@ -1,12 +1,13 @@
 package com.mg.pillreminder.domain.usecase
 
 import com.mg.pillreminder.domain.model.ReminderSchedule
+import com.mg.pillreminder.fake.DefaultTimeZoneRule
+import com.mg.pillreminder.fake.FakeAlarmScheduler
 import com.mg.pillreminder.fake.FakeMedicineRepository
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
 import java.time.Instant
@@ -14,24 +15,21 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
-import java.util.TimeZone
 
 class AddDailyMedicineUseCaseTest {
 
+    @get:Rule
+    val timeZoneRule = DefaultTimeZoneRule(SEOUL)
+
     private val now = seoul("2026-11-16T07:59")
     private val repository = FakeMedicineRepository()
-    private val useCase = AddDailyMedicineUseCase(repository, Clock.fixed(now, ZoneOffset.UTC))
-    private lateinit var originalZone: TimeZone
-
-    // UseCase가 사용 시점의 ZoneId.systemDefault()를 쓰므로 테스트 동안 서울로 고정한다.
-    @Before
-    fun setUp() {
-        originalZone = TimeZone.getDefault()
-        TimeZone.setDefault(TimeZone.getTimeZone(SEOUL))
-    }
-
-    @After
-    fun tearDown() = TimeZone.setDefault(originalZone)
+    private val alarmScheduler = FakeAlarmScheduler()
+    private val useCase = AddDailyMedicineUseCase(
+        repository,
+        repository.reminderRepository,
+        alarmScheduler,
+        Clock.fixed(now, ZoneOffset.UTC),
+    )
 
     @Test
     fun `약과 매일 알림을 저장한다`() = runTest {
@@ -60,6 +58,14 @@ class AddDailyMedicineUseCaseTest {
     }
 
     @Test
+    fun `저장한 알림을 다음 알림 시각에 예약한다`() = runTest {
+        useCase("비타민", LocalTime.of(8, 0))
+
+        val reminder = repository.reminders.single()
+        assertEquals(mapOf(reminder.id to seoul("2026-11-16T08:00")), alarmScheduler.scheduled)
+    }
+
+    @Test
     fun `이름 앞뒤 공백은 지운다`() = runTest {
         useCase("  비타민 ", LocalTime.of(8, 0))
 
@@ -80,6 +86,7 @@ class AddDailyMedicineUseCaseTest {
 
         assertTrue(result.exceptionOrNull() is IllegalArgumentException)
         assertTrue(repository.medicines.isEmpty())
+        assertTrue(alarmScheduler.scheduled.isEmpty())
     }
 
     private fun seoul(localDateTime: String): Instant = LocalDateTime.parse(localDateTime).atZone(SEOUL).toInstant()
