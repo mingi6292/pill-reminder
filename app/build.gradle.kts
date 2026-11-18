@@ -79,4 +79,12 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    constraints {
+        // androidTest는 앱 runtime 버전에 strict하게 맞춰진다. lifecycle이 가져오는 1.7.3으로는
+        // room-testing(1.8+ 필요)이 스키마 JSON을 읽다 AbstractMethodError로 죽어서 앱 쪽을 올린다.
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core") {
+            version { require(libs.versions.kotlinxSerialization.get()) }
+        }
+    }
 }
