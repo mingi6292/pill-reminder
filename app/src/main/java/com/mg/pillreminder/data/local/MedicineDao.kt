@@ -22,6 +22,9 @@ interface MedicineDao {
         return medicineId
     }
 
+    @Query("SELECT * FROM medicines ORDER BY createdAt")
+    suspend fun getAll(): List<MedicineEntity>
+
     @Query("SELECT * FROM medicines WHERE id = :medicineId")
     suspend fun findById(medicineId: Long): MedicineEntity?
 

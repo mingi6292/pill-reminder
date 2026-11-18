@@ -9,9 +9,10 @@ data class MedicineUiState(
     val askNotificationOnAdd: Boolean = false,
 )
 
-/** 알림이 없으면 nextReminderAt은 null. 표시 형식은 화면에서 사용 시점 타임존으로 정한다. */
+/** 알림이 없으면 nextReminderAt, 복용 기록이 없으면 lastTakenAt이 null. 표시 형식은 화면에서 사용 시점 타임존으로 정한다. */
 data class MedicineItem(
     val id: Long,
     val name: String,
     val nextReminderAt: Instant?,
+    val lastTakenAt: Instant? = null,
 )

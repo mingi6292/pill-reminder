@@ -2,7 +2,7 @@ package com.mg.pillreminder.ui.medicine
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mg.pillreminder.domain.model.MedicineWithNextReminder
+import com.mg.pillreminder.domain.model.MedicineOverview
 import com.mg.pillreminder.domain.permission.PermissionChecker
 import com.mg.pillreminder.domain.permission.PermissionStatus
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
@@ -64,7 +64,7 @@ class MedicineViewModel @Inject constructor(
     }
 
     private fun toUiState(
-        list: List<MedicineWithNextReminder>,
+        list: List<MedicineOverview>,
         status: PermissionStatus,
         askingNotification: Boolean,
     ): MedicineUiState {
@@ -77,10 +77,11 @@ class MedicineViewModel @Inject constructor(
         )
     }
 
-    private fun MedicineWithNextReminder.toItem() = MedicineItem(
+    private fun MedicineOverview.toItem() = MedicineItem(
         id = medicine.id,
         name = medicine.name,
         nextReminderAt = nextTriggerAt,
+        lastTakenAt = lastTakenAt,
     )
 
     private companion object {

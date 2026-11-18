@@ -38,6 +38,8 @@ class FakeMedicineRepository : MedicineRepository {
         }
     }
 
+    override suspend fun getAll(): List<Medicine> = medicines
+
     override suspend fun find(medicineId: Long): Medicine? = medicines.find { it.id == medicineId }
 
     override suspend fun addWithReminder(medicine: Medicine, reminder: Reminder): Long {
