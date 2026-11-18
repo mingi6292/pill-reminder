@@ -37,9 +37,11 @@ android {
             if (releaseKeystorePath != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // packageScope로 범위를 나누면 R8이 kotlin.collections의 package-private
+            // multifile 파트(CollectionsKt__IteratorsKt)만 다른 패키지로 옮겨 부모 접근이 깨지고
+            // 시작 시 IllegalAccessError로 죽었다(v0.2.0). 앱 전체를 한 기준으로 최적화한다.
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }

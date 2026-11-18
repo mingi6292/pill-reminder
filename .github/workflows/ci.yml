@@ -23,8 +23,15 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
+      # CI에는 서명 키가 없어 서명 없는 release APK가 나온다. R8 빌드 실패를 잡는 용도다.
       - name: Build and test
-        run: ./gradlew assembleDebug testDebugUnitTest lintDebug
+        run: ./gradlew assembleDebug testDebugUnitTest lintDebug assembleRelease
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-unsigned-apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload reports
         if: always()
@@ -32,3 +39,39 @@ jobs:
         with:
           name: reports
           path: '**/build/reports/'
+
+  smoke-test:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-unsigned-apk
+
+      # 서명 없는 APK는 설치되지 않는다. 빌드 설정을 건드리지 않으려고 일회용 키로 여기서만 서명한다.
+      - name: Sign APK with throwaway key
+        run: |
+          keytool -genkeypair -keystore smoke.keystore -storepass android -keypass android \
+            -alias smoke -keyalg RSA -validity 1 -dname "CN=smoke"
+          build_tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$build_tools/apksigner" sign --ks smoke.keystore --ks-pass pass:android \
+            --out app-release-smoke.apk app-release-unsigned.apk
+
+      # 에뮬레이터 하드웨어 가속에 KVM 접근 권한이 필요하다.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch release APK on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          script: bash .github/scripts/smoke-test.sh app-release-smoke.apk

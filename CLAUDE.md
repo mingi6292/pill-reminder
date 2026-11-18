@@ -36,6 +36,8 @@
 
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`
-- CI: `.github/workflows/ci.yml` (assembleDebug, testDebugUnitTest, lintDebug)
+- CI: `.github/workflows/ci.yml`
+  - `build`: assembleDebug, testDebugUnitTest, lintDebug, assembleRelease(서명 없음, R8 실패 검출)
+  - `smoke-test`: release APK를 일회용 키로 서명해 에뮬레이터(API 35)에서 실행, 시작 크래시 검사(`.github/scripts/smoke-test.sh`)
 - CD: `v*` 태그 push → `.github/workflows/release.yml`이 서명된 APK를 GitHub Release에 올린다. 예: `git tag v0.1.0 && git push origin v0.1.0`
   - Secrets: `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`
