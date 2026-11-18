@@ -34,10 +34,17 @@
 - [x] 권한 처리
 - [x] README 정리
 
+## 진행 상황 (2차)
+- [x] F3-1 복용 기록 (알림 "먹었어" 버튼, Room v2 마이그레이션)
+- [ ] F3-2 마지막 복용 조회
+- [ ] F3-3 "N시간 뒤" 1회 알림
+- [ ] F3-4 주기 제안
+- [ ] 음성 대화 (F4)
+
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`
 - CI: `.github/workflows/ci.yml`
   - `build`: assembleDebug, testDebugUnitTest, lintDebug, assembleRelease(서명 없음, R8 실패 검출)
-  - `smoke-test`: release APK를 일회용 키로 서명해 에뮬레이터(API 35)에서 실행, 시작 크래시 검사(`.github/scripts/smoke-test.sh`)
+  - `smoke-test`: release APK를 일회용 키로 서명해 에뮬레이터(API 35)에서 실행, 시작 크래시 검사(`.github/scripts/smoke-test.sh`). 같은 에뮬레이터에서 `connectedDebugAndroidTest`(Room 마이그레이션 테스트)도 실행
 - CD: `v*` 태그 push → `.github/workflows/release.yml`이 서명된 APK를 GitHub Release에 올린다. 예: `git tag v0.1.0 && git push origin v0.1.0`
   - Secrets: `RELEASE_KEYSTORE_BASE64`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS`, `RELEASE_KEY_PASSWORD`

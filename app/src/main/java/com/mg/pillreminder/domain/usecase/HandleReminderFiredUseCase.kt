@@ -23,7 +23,7 @@ class HandleReminderFiredUseCase @Inject constructor(
         val reminder = reminderRepository.find(reminderId) ?: return null
         val medicine = medicineRepository.find(reminder.medicineId) ?: return null
         scheduleNext(reminder)
-        return DueReminder(reminderId = reminder.id, medicineName = medicine.name)
+        return DueReminder(reminderId = reminder.id, medicineId = medicine.id, medicineName = medicine.name)
     }
 
     private suspend fun scheduleNext(reminder: Reminder) {

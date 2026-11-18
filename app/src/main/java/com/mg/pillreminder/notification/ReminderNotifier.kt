@@ -12,6 +12,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.mg.pillreminder.MainActivity
 import com.mg.pillreminder.R
+import com.mg.pillreminder.alarm.DoseTakenReceiver
 import com.mg.pillreminder.domain.model.DueReminder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -30,8 +31,12 @@ class ReminderNotifier @Inject constructor(
             return
         }
         createChannel()
-        notificationManager.notify(reminder.reminderId.toInt(), buildNotification(reminder))
+        notificationManager.notify(notificationId(reminder.reminderId), buildNotification(reminder))
     }
+
+    fun dismiss(reminderId: Long) = notificationManager.cancel(notificationId(reminderId))
+
+    private fun notificationId(reminderId: Long) = reminderId.toInt()
 
     // 이미 있는 채널은 다시 만들어도 바뀌지 않으므로 매번 호출해도 된다.
     private fun createChannel() {
@@ -48,6 +53,7 @@ class ReminderNotifier @Inject constructor(
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setContentIntent(openAppIntent())
+        .addAction(0, context.getString(R.string.reminder_action_taken), doseTakenIntent(reminder))
         .setAutoCancel(true)
         .build()
 
@@ -61,6 +67,14 @@ class ReminderNotifier @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
+
+    // requestCode가 같으면 PendingIntent가 덮어써져 다른 알림의 extras로 기록된다. 알림 id로 나눈다.
+    private fun doseTakenIntent(reminder: DueReminder): PendingIntent = PendingIntent.getBroadcast(
+        context,
+        notificationId(reminder.reminderId),
+        DoseTakenReceiver.intent(context, reminder.reminderId, reminder.medicineId),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
 
     private companion object {
         const val CHANNEL_ID = "medication_reminder"

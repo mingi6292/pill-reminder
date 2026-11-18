@@ -2,6 +2,8 @@ package com.mg.pillreminder.di
 
 import android.content.Context
 import androidx.room.Room
+import com.mg.pillreminder.data.local.ALL_MIGRATIONS
+import com.mg.pillreminder.data.local.DoseRecordDao
 import com.mg.pillreminder.data.local.MedicineDao
 import com.mg.pillreminder.data.local.PillReminderDatabase
 import com.mg.pillreminder.data.local.ReminderDao
@@ -19,11 +21,16 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): PillReminderDatabase =
-        Room.databaseBuilder(context, PillReminderDatabase::class.java, "pill_reminder.db").build()
+        Room.databaseBuilder(context, PillReminderDatabase::class.java, "pill_reminder.db")
+            .addMigrations(*ALL_MIGRATIONS)
+            .build()
 
     @Provides
     fun provideMedicineDao(database: PillReminderDatabase): MedicineDao = database.medicineDao()
 
     @Provides
     fun provideReminderDao(database: PillReminderDatabase): ReminderDao = database.reminderDao()
+
+    @Provides
+    fun provideDoseRecordDao(database: PillReminderDatabase): DoseRecordDao = database.doseRecordDao()
 }
