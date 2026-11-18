@@ -35,6 +35,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".alarm.DoseTakenReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".alarm.BootReceiver"
             android:exported="false">
             <intent-filter>

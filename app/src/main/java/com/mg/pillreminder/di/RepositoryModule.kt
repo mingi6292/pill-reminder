@@ -1,7 +1,9 @@
 package com.mg.pillreminder.di
 
+import com.mg.pillreminder.data.repository.DoseRecordRepositoryImpl
 import com.mg.pillreminder.data.repository.MedicineRepositoryImpl
 import com.mg.pillreminder.data.repository.ReminderRepositoryImpl
+import com.mg.pillreminder.domain.repository.DoseRecordRepository
 import com.mg.pillreminder.domain.repository.MedicineRepository
 import com.mg.pillreminder.domain.repository.ReminderRepository
 import dagger.Binds
@@ -18,4 +20,7 @@ interface RepositoryModule {
 
     @Binds
     fun bindReminderRepository(impl: ReminderRepositoryImpl): ReminderRepository
+
+    @Binds
+    fun bindDoseRecordRepository(impl: DoseRecordRepositoryImpl): DoseRecordRepository
 }

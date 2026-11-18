@@ -30,12 +30,13 @@ class HandleReminderFiredUseCaseTest {
     private val alarmScheduler = FakeAlarmScheduler()
 
     @Test
-    fun `울린 알림의 약 이름을 돌려준다`() = runTest {
+    fun `울린 알림의 약 id와 이름을 돌려준다`() = runTest {
         val reminderId = saveDaily("비타민", seoul("2026-11-16T08:00"))
+        val medicineId = repository.reminders.single().medicineId
 
         val due = fireAt(seoul("2026-11-16T08:00"), reminderId)
 
-        assertEquals(DueReminder(reminderId, "비타민"), due)
+        assertEquals(DueReminder(reminderId, medicineId, "비타민"), due)
     }
 
     @Test

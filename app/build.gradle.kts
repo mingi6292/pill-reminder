@@ -48,7 +48,7 @@ android {
 }
 
 room {
-    // 2차에 DoseRecord를 추가할 때 마이그레이션을 검증하려고 스키마를 커밋한다.
+    // 커밋한 스키마는 androidTest의 MigrationTestHelper가 마이그레이션 검증에 쓴다.
     schemaDirectory("$projectDir/schemas")
 }
 
@@ -74,6 +74,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
