@@ -132,7 +132,12 @@ private fun MedicineListBody(
 private fun MedicineRow(medicine: MedicineItem, onDelete: () -> Unit) {
     ListItem(
         headlineContent = { Text(medicine.name) },
-        supportingContent = { Text(nextReminderText(medicine.nextReminderAt)) },
+        supportingContent = {
+            Column {
+                Text(nextReminderText(medicine.nextReminderAt))
+                medicine.lastTakenAt?.let { Text(lastTakenText(it)) }
+            }
+        },
         trailingContent = {
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.medicine_delete))
@@ -149,6 +154,12 @@ private fun nextReminderText(nextReminderAt: Instant?): String {
     return stringResource(R.string.medicine_next_reminder, formatted)
 }
 
+@Composable
+private fun lastTakenText(lastTakenAt: Instant): String {
+    val formatted = formatLastTaken(lastTakenAt, Instant.now(), ZoneId.systemDefault())
+    return stringResource(R.string.medicine_last_taken, formatted)
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun MedicineListContentPreview() {
@@ -157,7 +168,7 @@ private fun MedicineListContentPreview() {
             uiState = MedicineUiState(
                 isLoading = false,
                 medicines = listOf(
-                    MedicineItem(1, "비타민", Instant.parse("2026-11-16T23:00:00Z")),
+                    MedicineItem(1, "비타민", Instant.parse("2026-11-16T23:00:00Z"), Instant.parse("2026-11-15T23:05:00Z")),
                     MedicineItem(2, "유산균", null),
                 ),
                 permissionBanner = PermissionBanner.ExactAlarm,

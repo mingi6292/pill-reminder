@@ -13,3 +13,10 @@ data class MedicineWithNextReminder(
     val medicine: Medicine,
     val nextTriggerAt: Instant?,
 )
+
+/** 약 목록 화면용. 알림이 없으면 nextTriggerAt, 복용 기록이 없으면 lastTakenAt이 null. */
+data class MedicineOverview(
+    val medicine: Medicine,
+    val nextTriggerAt: Instant?,
+    val lastTakenAt: Instant?,
+)

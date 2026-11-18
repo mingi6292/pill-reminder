@@ -7,6 +7,7 @@ import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
 import com.mg.pillreminder.fake.FakeAlarmScheduler
+import com.mg.pillreminder.fake.FakeDoseRecordRepository
 import com.mg.pillreminder.fake.FakeMedicineRepository
 import com.mg.pillreminder.fake.FakePermissionChecker
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ class MedicineViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         viewModel = MedicineViewModel(
-            ObserveMedicinesUseCase(repository),
+            ObserveMedicinesUseCase(repository, FakeDoseRecordRepository()),
             AddDailyMedicineUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
             DeleteMedicineUseCase(repository, repository.reminderRepository, alarmScheduler),
             permissionChecker,
