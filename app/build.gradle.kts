@@ -42,7 +42,6 @@ android {
             // 시작 시 IllegalAccessError로 죽었다(v0.2.0). 앱 전체를 한 기준으로 최적화한다.
             optimization {
                 enable = true
-                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
         }
     }
