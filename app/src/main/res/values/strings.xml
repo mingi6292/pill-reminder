@@ -12,6 +12,10 @@
     <string name="reminder_channel_name">복약 알림</string>
     <string name="reminder_notification_text">약 드실 시간이에요</string>
     <string name="reminder_action_taken">먹었어</string>
+    <string name="reminder_action_later">1시간 뒤</string>
+    <string name="medicine_remind_later">나중에 알림</string>
+    <string name="medicine_remind_after_hours">%1$d시간 뒤</string>
+    <string name="medicine_remind_later_scheduled">%1$s에 다시 알려드릴게요</string>
     <string name="permission_notification_title">알림이 꺼져 있어요</string>
     <string name="permission_notification_message">약 드실 시간을 알려드리려면 알림을 허용해 주세요. 눌러서 허용하기</string>
     <string name="permission_exact_alarm_title">알림이 늦게 울릴 수 있어요</string>

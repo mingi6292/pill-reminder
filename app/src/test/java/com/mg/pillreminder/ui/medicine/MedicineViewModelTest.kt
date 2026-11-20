@@ -6,12 +6,15 @@ import com.mg.pillreminder.domain.permission.PermissionStatus
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
+import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
+import com.mg.pillreminder.fake.DefaultTimeZoneRule
 import com.mg.pillreminder.fake.FakeAlarmScheduler
 import com.mg.pillreminder.fake.FakeDoseRecordRepository
 import com.mg.pillreminder.fake.FakeMedicineRepository
 import com.mg.pillreminder.fake.FakePermissionChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -23,14 +26,20 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MedicineViewModelTest {
+
+    // 매일 08:00 알림이 UTC 08:00이 되게 고정해 "나중에" 알림과 어느 쪽이 이른지 정해 둔다.
+    @get:Rule
+    val timeZoneRule = DefaultTimeZoneRule(ZoneOffset.UTC)
 
     private val repository = FakeMedicineRepository()
     private val alarmScheduler = FakeAlarmScheduler()
@@ -45,6 +54,7 @@ class MedicineViewModelTest {
             ObserveMedicinesUseCase(repository, FakeDoseRecordRepository()),
             AddDailyMedicineUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
             DeleteMedicineUseCase(repository, repository.reminderRepository, alarmScheduler),
+            ScheduleOnceReminderUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
             permissionChecker,
         )
     }
@@ -88,6 +98,20 @@ class MedicineViewModelTest {
 
             assertEquals(emptyList<MedicineItem>(), awaitItem().medicines)
         }
+    }
+
+    @Test
+    fun `나중에 알림을 예약하면 예약 시각을 알리고 목록의 다음 알림이 더 이른 시각으로 바뀐다`() = runTest {
+        viewModel.addMedicine("비타민", LocalTime.of(8, 0))
+        val medicineId = repository.medicines.single().id
+
+        viewModel.remindLaterScheduled.test {
+            viewModel.remindLater(medicineId, Duration.ofHours(2))
+
+            assertEquals(Instant.parse("2026-11-16T02:00:00Z"), awaitItem())
+        }
+        val item = viewModel.uiState.first { !it.isLoading }.medicines.single()
+        assertEquals(Instant.parse("2026-11-16T02:00:00Z"), item.nextReminderAt)
     }
 
     @Test
