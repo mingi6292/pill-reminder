@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.mg.pillreminder.MainActivity
 import com.mg.pillreminder.R
 import com.mg.pillreminder.alarm.DoseTakenReceiver
+import com.mg.pillreminder.alarm.RemindLaterReceiver
 import com.mg.pillreminder.domain.model.DueReminder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -54,6 +55,7 @@ class ReminderNotifier @Inject constructor(
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setContentIntent(openAppIntent())
         .addAction(0, context.getString(R.string.reminder_action_taken), doseTakenIntent(reminder))
+        .addAction(0, context.getString(R.string.reminder_action_later), remindLaterIntent(reminder))
         .setAutoCancel(true)
         .build()
 
@@ -68,11 +70,18 @@ class ReminderNotifier @Inject constructor(
         )
     }
 
+    private fun doseTakenIntent(reminder: DueReminder): PendingIntent =
+        actionIntent(reminder, DoseTakenReceiver.intent(context, reminder.reminderId, reminder.medicineId))
+
+    private fun remindLaterIntent(reminder: DueReminder): PendingIntent =
+        actionIntent(reminder, RemindLaterReceiver.intent(context, reminder.reminderId, reminder.medicineId))
+
     // requestCode가 같으면 PendingIntent가 덮어써져 다른 알림의 extras로 기록된다. 알림 id로 나눈다.
-    private fun doseTakenIntent(reminder: DueReminder): PendingIntent = PendingIntent.getBroadcast(
+    // 버튼끼리는 받는 Receiver가 달라 requestCode가 같아도 따로 만들어진다.
+    private fun actionIntent(reminder: DueReminder, intent: Intent): PendingIntent = PendingIntent.getBroadcast(
         context,
         notificationId(reminder.reminderId),
-        DoseTakenReceiver.intent(context, reminder.reminderId, reminder.medicineId),
+        intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
