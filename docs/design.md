@@ -30,7 +30,7 @@
 ### R3. 복용 기록 (2차)
 - F3-1 복용 기록: 약 이름과 현재 시각 저장. 알림의 "먹었어" 버튼으로도 기록
 - F3-2 마지막 복용 조회: 약 이름으로 직전 복용 시각 조회 (`GetLastDoseUseCase`). 약 목록에도 "마지막 복용 HH:mm"(오늘이 아니면 날짜 포함) 표시
-- F3-3 "N시간 뒤 알려줘": 1회성 알림 예약
+- F3-3 "N시간 뒤 알려줘": 1회성 알림 예약 (`ScheduleOnceReminderUseCase`). 입구는 약 목록의 "나중에 알림"(1~4시간)과 알림의 "1시간 뒤" 버튼. 목록의 "다음 알림"은 매일·1회 중 이른 시각
 - F3-4 주기 제안: 복용 간격이 반복되면 주기 알림을 제안 (규칙은 5장)
 
 ### R4. 음성 대화 (2차)
@@ -52,7 +52,7 @@
 com.mg.pillreminder
 ├─ domain/          순수 Kotlin. 단위 테스트 대상
 │  ├─ model/        Medicine, DoseRecord, Reminder
-│  ├─ usecase/      AddMedicine, RecordDose, GetLastDose, ScheduleReminderAfter ...
+│  ├─ usecase/      AddDailyMedicine, RecordDose, GetLastDose, ScheduleOnceReminder ...
 │  └─ ReminderTimeCalculator, RecurringIntervalDetector
 ├─ data/            Room (Entity, Dao, Database), Repository 구현
 ├─ alarm/           AlarmScheduler(AlarmManager 래퍼), AlarmReceiver, BootReceiver
@@ -166,6 +166,11 @@ sealed interface VoiceIntent {
 - 약 이름 매칭(F3-2)은 공백을 모두 지우고 소문자로 바꾼 뒤 완전 일치로 한다. 음성 인식의 띄어쓰기 흔들림을 흡수하되, 부분 일치는 "비타민"이 "비타민D"를 잡는 오답이 나와 쓰지 않는다.
 - 약 하나에 시각이 하나라 같은 이름을 여러 번 등록할 수 있다. 이름 조회는 같은 이름의 약 전체에서 가장 최근 기록을 고른다.
 - 조회 결과는 `LastDoseResult`(약 없음 / 기록 없음 / 시각)로 나눈다. 음성 입구가 "등록할까요?"와 "기록이 없어요"를 구분해 답하기 위해서다.
+- 1회(Once) 알림은 울리면 바로 지운다(F3-3). 다시 예약할 일이 없고, 남겨 두면 목록의 "다음 알림"에 지난 시각이 남는다.
+- 재부팅 중에 시각이 지난 1회 알림은 버리지 않고 그 시각으로 예약해 바로 한 번 울린다. 매일 알림의 놓친 알림과 같은 규칙이고, 약을 놓쳤다고 알리는 편이 안전하다.
+- 약 하나에 1회 알림은 하나만 둔다. "나중에"를 다시 누르면 이전 1회 알림을 지우고 새 시각으로 바꾼다. 같은 약 알림이 여러 번 울리면 헷갈리기 때문이다. 매일 알림은 그대로 둔다.
+- Once는 기존 `type = ONCE` 컬럼으로 저장할 수 있어 Room 스키마는 v2 그대로 둔다.
+- 알림의 "1시간 뒤" 버튼은 1회 알림을 예약하고 지금 알림만 닫는다. 복용 기록은 남기지 않는다.
 
 ## 9. 미정 항목
 

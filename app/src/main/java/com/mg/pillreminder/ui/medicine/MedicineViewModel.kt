@@ -8,13 +8,19 @@ import com.mg.pillreminder.domain.permission.PermissionStatus
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
+import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -23,6 +29,7 @@ class MedicineViewModel @Inject constructor(
     observeMedicines: ObserveMedicinesUseCase,
     private val addDailyMedicine: AddDailyMedicineUseCase,
     private val deleteMedicineUseCase: DeleteMedicineUseCase,
+    private val scheduleOnceReminder: ScheduleOnceReminderUseCase,
     private val permissionChecker: PermissionChecker,
 ) : ViewModel() {
 
@@ -38,6 +45,12 @@ class MedicineViewModel @Inject constructor(
     ) { list, status, asking ->
         toUiState(list, status, asking)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), MedicineUiState())
+
+    // 안내는 한 번만 보여야 해서 상태가 아니라 이벤트로 낸다. 화면이 잠깐 구독을 끊어도 Channel이 들고 있는다.
+    private val remindLaterEvents = Channel<Instant>(Channel.BUFFERED)
+
+    /** "나중에 알림"이 예약된 시각. 화면이 안내 문구로 보여 준다. */
+    val remindLaterScheduled: Flow<Instant> = remindLaterEvents.receiveAsFlow()
 
     /** 설정 화면이나 권한 요청에서 돌아왔을 때 부른다. */
     fun refreshPermissions() {
@@ -61,6 +74,12 @@ class MedicineViewModel @Inject constructor(
 
     fun deleteMedicine(medicineId: Long) {
         viewModelScope.launch { deleteMedicineUseCase(medicineId) }
+    }
+
+    fun remindLater(medicineId: Long, after: Duration) {
+        viewModelScope.launch {
+            scheduleOnceReminder(medicineId, after)?.let { remindLaterEvents.send(it) }
+        }
     }
 
     private fun toUiState(
