@@ -6,6 +6,8 @@
     <!-- USE_EXACT_ALARM은 Play 정책상 알람·캘린더 앱 전용이라 사용자가 허용하는 SCHEDULE_EXACT_ALARM을 쓴다. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 음성 문장을 Gemini로 해석한다. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".PillReminderApp"

@@ -140,7 +140,7 @@ sealed interface VoiceIntent {
     data class RecordDose(val medicineName: String) : VoiceIntent
     data class ScheduleAfter(val medicineName: String?, val minutes: Int) : VoiceIntent
     data class AskLastDose(val medicineName: String) : VoiceIntent
-    data class AcceptRecurring(val accept: Boolean) : VoiceIntent
+    data class Answer(val yes: Boolean) : VoiceIntent             // "응", "아니". 직전 질문(등록할까요? / 주기 알림 받을까요?)에 대한 답
     data object Unknown : VoiceIntent
 }
 ```
@@ -150,7 +150,7 @@ sealed interface VoiceIntent {
 2. "4시간 뒤에" → `ScheduleAfter(null, 240)` → 직전 대화의 약으로 예약 → "4시간 뒤 오후 3시 20분에 알려드릴게요."
 3. "생리통약 언제 먹었지?" → `AskLastDose("생리통약")` → "오늘 오전 11시 20분에 드셨어요. 4시간 지났어요."
 
-등록되지 않은 약 이름이면 새로 등록할지 묻는다.
+등록되지 않은 약 이름이면 새로 등록할지 묻는다. "응"이라고 하면 이름을 채운 등록 시트를 열고, 복용 시각은 화면에서 고른다.
 
 ## 7. 권한과 안정성
 
@@ -182,10 +182,16 @@ sealed interface VoiceIntent {
 - 주기 판단의 기준은 평균이 아니라 중앙값이다. 한 번 늦게 먹은 기록이 결과를 끌고 가지 않게 하기 위해서다.
 - 주기 알림은 매일 알림과 함께 둔다. 수락해도 매일 알림을 지우지 않고, 목록의 "다음 알림"은 둘 중 이른 시각이다.
 - "먹었어"를 누르면 주기 알림은 먹은 시각부터 다시 센다. 주기 알림의 목적이 "먹고 나서 N시간 뒤"이기 때문이다. 매일 알림은 그대로 둔다.
+- 음성 의도 해석은 Gemini Interactions API(`gemini-3.5-flash-lite`, `thinking_level: minimal`, `response_format` JSON 스키마)를 쓴다. 짧은 문장 분류라 가장 싸고 빠른 stable 모델로 충분하다. `store: false`로 복약 문장을 서버에 남기지 않는다.
+- Gemini 키는 `local.properties`의 `GEMINI_API_KEY` → `BuildConfig`. git에 올리지 않고, 없으면 빈 문자열로 빌드되어 해석이 `Unknown`이 된다. CI는 키 없이 Fake와 MockWebServer로 테스트한다. APK에 키가 들어가므로 개인용 빌드에만 쓴다.
+- 파싱 실패, 네트워크 오류, 시간 초과(10초)는 모두 `Unknown`으로 보고 "다시 말씀해 주세요"로 잇는다.
+- 6장의 `AcceptRecurring`은 `Answer(yes)`로 일반화했다. 예/아니오 질문이 주기 제안 말고도 "등록할까요?"가 있어서, 무엇에 대한 답인지는 대화가 기억하는 직전 질문으로 정한다.
+- 음성 응답에서 약 이름 뒤에는 조사 대신 쉼표를 쓴다("비타민D, 등록되지 않은 약이에요"). 받침이나 영문 끝 글자에 따라 은/는이 갈려서다.
+- 같은 이름의 약이 여럿이면 음성은 id가 가장 작은 약에 기록·예약한다. 1회 알림이 약마다 하나라 매번 같은 약을 골라야 다시 말했을 때 이전 예약이 바뀐다.
 
 ## 9. 미정 항목
 
-- [ ] LLM API 선택 (Claude / Gemini / 기타)과 키 보관 방식 → 2차 시작 전 결정
+- [x] LLM API 선택 (Claude / Gemini / 기타)과 키 보관 방식 → F4에서 결정 (8장)
 - [ ] 빅스비 빠른 명령어로 앱을 열 때 잠금 화면에서도 음성 입력이 되는지 → 실기기 검증
 - [x] 알림의 "먹었어" 버튼을 1차에 넣을지 → 2차 F3-1에서 넣음
 - [ ] 같은 약을 짧은 간격으로 두 번 기록하면 경고할지 (예: 1시간 이내)
