@@ -43,7 +43,7 @@ class VoiceConversationTest {
 
     private val conversation = VoiceConversation(
         medicines,
-        RecordDoseUseCase(medicines, doseRecords, clock),
+        RecordDoseUseCase(medicines, doseRecords, medicines.reminderRepository, alarmScheduler, clock),
         ScheduleOnceReminderUseCase(medicines, medicines.reminderRepository, alarmScheduler, clock),
         GetLastDoseUseCase(medicines, doseRecords),
         clock,
