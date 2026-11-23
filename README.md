@@ -13,6 +13,34 @@
   - 알림 권한(Android 13+)은 첫 약을 등록할 때 묻습니다. 거부하면 목록 상단 배너로 안내합니다.
   - 정확한 알람 권한(Android 12+)이 없으면 배너로 안내하고 설정 화면으로 보냅니다.
 
+## 음성 대화
+
+약 목록 상단의 마이크 버튼을 누르면 한국어로 말해 조작합니다. 예: "생리통약 먹었어" → "4시간 뒤에" → "생리통약 언제 먹었지?"
+
+- 음성 인식은 기기의 `SpeechRecognizer`, 응답은 `TextToSpeech`(한국어)를 씁니다. 문장 해석만 Gemini API를 호출합니다.
+- 등록하지 않은 약을 말하면 "새로 등록할까요?"라고 묻고, "응"이라고 하면 이름을 채운 등록 화면을 엽니다.
+- 처음 쓸 때 마이크 권한을 묻습니다.
+
+### Gemini 키
+
+저장소에는 키를 두지 않습니다. 프로젝트 루트의 `local.properties`(git 제외)에 넣습니다. 없어도 빌드되지만 말을 해석하지 못해 "다시 말씀해 주세요"만 나옵니다.
+
+```properties
+GEMINI_API_KEY=발급받은_키
+```
+
+APK에 키가 들어가므로 개인용 빌드에만 쓰세요. CI와 Releases의 APK에는 키가 없습니다.
+
+### 앱을 열자마자 바로 듣기
+
+아래 입구는 모두 앱을 열면서 음성 시트를 띄우고 바로 듣기 시작합니다.
+
+- 앱 아이콘을 길게 눌러 "음성으로 말하기" 바로가기
+- 딥링크 `pillreminder://voice`
+- `adb shell am start -n com.mg.pillreminder/.MainActivity --ez com.mg.pillreminder.extra.START_VOICE true`
+
+빅스비 빠른 명령어에서는 "앱 열기"로 PillReminder를 지정하면 앱까지 열립니다. 바로 듣기까지 이어지는지는 실기기에서 확인하지 못했습니다. 안 되면 위 바로가기나 딥링크를 여는 동작으로 대신하세요. 기본 디지털 어시스턴트로 지정하는 방식은 별도의 `VoiceInteractionService`가 필요해 아직 지원하지 않습니다.
+
 ## 설치
 
 [Releases](https://github.com/mingi6292/pill-reminder/releases)에서 최신 `pill-reminder-v*.apk`를 받아 설치합니다. minSdk는 26(Android 8.0)입니다.
@@ -59,6 +87,7 @@ com.mg.pillreminder
 ├─ alarm/         AlarmManager 예약, AlarmReceiver, BootReceiver, ExactAlarmPermissionReceiver
 ├─ notification/  알림 채널과 표시
 ├─ permission/    권한 상태 읽기, 설정 화면 Intent
+├─ voice/         Gemini 클라이언트, SpeechRecognizer·TextToSpeech 래퍼
 ├─ ui/            Compose 화면과 ViewModel
 └─ di/            Hilt 모듈
 ```
@@ -75,5 +104,5 @@ Kotlin · Jetpack Compose · Material 3 · Hilt · Room · Coroutines/Flow · Al
 - [x] 단위 테스트
 - [x] GitHub Actions CI, 태그 기반 릴리스 배포
 - [ ] 복용 기록, "N시간 뒤 알려줘" (2차)
-- [ ] 앱 자체 음성 대화: SpeechRecognizer + LLM + TTS (2차)
+- [x] 앱 자체 음성 대화: SpeechRecognizer + Gemini + TTS
 - [ ] AppFunctions로 핵심 기능 노출 (3차)

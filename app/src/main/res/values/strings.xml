@@ -25,4 +25,13 @@
     <string name="permission_notification_message">약 드실 시간을 알려드리려면 알림을 허용해 주세요. 눌러서 허용하기</string>
     <string name="permission_exact_alarm_title">알림이 늦게 울릴 수 있어요</string>
     <string name="permission_exact_alarm_message">정해진 시각에 알려드리려면 알람 및 리마인더를 허용해 주세요. 눌러서 설정하기</string>
+    <string name="voice_open">음성으로 말하기</string>
+    <string name="voice_listen">듣기</string>
+    <string name="voice_idle">마이크를 눌러 말해 보세요</string>
+    <string name="voice_listening">듣고 있어요…</string>
+    <string name="voice_thinking">생각하고 있어요…</string>
+    <string name="voice_speaking">답하고 있어요…</string>
+    <string name="voice_no_speech">못 들었어요. 마이크를 눌러 다시 말해 주세요</string>
+    <string name="voice_permission_denied">마이크 권한이 필요해요. 설정에서 허용해 주세요</string>
+    <string name="voice_unavailable">이 기기에서 음성 인식을 쓸 수 없어요</string>
 </resources>

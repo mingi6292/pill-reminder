@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 아이콘을 길게 눌러 바로 말하기. 빅스비·위젯 같은 입구도 같은 딥링크를 쓴다. -->
+    <shortcut
+        android:shortcutId="voice"
+        android:enabled="true"
+        android:icon="@drawable/ic_mic"
+        android:shortcutShortLabel="@string/voice_open">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="pillreminder://voice"
+            android:targetClass="com.mg.pillreminder.MainActivity"
+            android:targetPackage="com.mg.pillreminder" />
+    </shortcut>
+</shortcuts>

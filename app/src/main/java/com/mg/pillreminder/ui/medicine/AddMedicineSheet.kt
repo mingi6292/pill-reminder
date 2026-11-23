@@ -31,10 +31,11 @@ private const val DEFAULT_HOUR = 8
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMedicineSheet(
+    initialName: String = "",
     onDismiss: () -> Unit,
     onSave: (name: String, time: LocalTime) -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf(initialName) }
     val timeState = rememberTimePickerState(initialHour = DEFAULT_HOUR, initialMinute = 0, is24Hour = true)
 
     ModalBottomSheet(
