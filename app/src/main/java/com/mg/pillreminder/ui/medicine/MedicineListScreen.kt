@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +45,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mg.pillreminder.R
 import com.mg.pillreminder.ui.theme.PillReminderTheme
+import com.mg.pillreminder.ui.voice.VoiceSheet
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
@@ -54,7 +56,10 @@ private val NEXT_REMINDER_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPatter
 private val REMIND_LATER_HOURS = 1L..4L
 
 @Composable
-fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
+fun MedicineListScreen(
+    voiceLaunchRequest: Int = 0,
+    viewModel: MedicineViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
@@ -85,6 +90,7 @@ fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
         onAcceptInterval = viewModel::acceptIntervalSuggestion,
         onRejectInterval = viewModel::rejectIntervalSuggestion,
         onPermissionBannerClick = permissionActions::resolve,
+        voiceLaunchRequest = voiceLaunchRequest,
     )
 }
 
@@ -99,15 +105,32 @@ fun MedicineListContent(
     onAcceptInterval: (medicineId: Long, interval: Duration) -> Unit,
     onRejectInterval: (medicineId: Long) -> Unit,
     onPermissionBannerClick: (PermissionBanner) -> Unit,
+    voiceLaunchRequest: Int = 0,
 ) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
+    var addSheetName by rememberSaveable { mutableStateOf("") }
+    var showVoiceSheet by rememberSaveable { mutableStateOf(false) }
+    // 앱을 열자마자 듣기 시작하는 진입점(딥링크, 바로가기)이 요청을 올리면 시트를 연다.
+    LaunchedEffect(voiceLaunchRequest) { if (voiceLaunchRequest > 0) showVoiceSheet = true }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.medicine_list_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.medicine_list_title)) },
+                actions = {
+                    IconButton(onClick = { showVoiceSheet = true }) {
+                        Icon(painterResource(R.drawable.ic_mic), contentDescription = stringResource(R.string.voice_open))
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { showAddSheet = true },
+                onClick = {
+                    addSheetName = ""
+                    showAddSheet = true
+                },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text(stringResource(R.string.medicine_add)) },
             )
@@ -128,8 +151,20 @@ fun MedicineListContent(
         }
     }
 
+    if (showVoiceSheet) {
+        VoiceSheet(
+            onDismiss = { showVoiceSheet = false },
+            onRegisterMedicine = { name ->
+                showVoiceSheet = false
+                addSheetName = name
+                showAddSheet = true
+            },
+        )
+    }
+
     if (showAddSheet) {
         AddMedicineSheet(
+            initialName = addSheetName,
             onDismiss = { showAddSheet = false },
             onSave = { name, time ->
                 onAddMedicine(name, time)
