@@ -4,8 +4,11 @@ import com.mg.pillreminder.domain.model.DoseRecord
 import com.mg.pillreminder.domain.model.Medicine
 import com.mg.pillreminder.domain.model.Reminder
 import com.mg.pillreminder.domain.model.ReminderSchedule
+import com.mg.pillreminder.domain.usecase.AcceptIntervalSuggestionUseCase
+import com.mg.pillreminder.domain.usecase.GetIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.GetLastDoseUseCase
 import com.mg.pillreminder.domain.usecase.RecordDoseUseCase
+import com.mg.pillreminder.domain.usecase.RejectIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
 import com.mg.pillreminder.fake.DefaultTimeZoneRule
 import com.mg.pillreminder.fake.FakeAlarmScheduler
@@ -19,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -46,6 +50,9 @@ class VoiceConversationTest {
         RecordDoseUseCase(medicines, doseRecords, medicines.reminderRepository, alarmScheduler, clock),
         ScheduleOnceReminderUseCase(medicines, medicines.reminderRepository, alarmScheduler, clock),
         GetLastDoseUseCase(medicines, doseRecords),
+        GetIntervalSuggestionUseCase(medicines, medicines.reminderRepository, doseRecords),
+        AcceptIntervalSuggestionUseCase(medicines, medicines.reminderRepository, doseRecords, alarmScheduler, clock),
+        RejectIntervalSuggestionUseCase(medicines),
         clock,
     )
 
@@ -83,6 +90,44 @@ class VoiceConversationTest {
         val reply = conversation.reply(VoiceIntent.AskLastDose("생리통약"))
 
         assertEquals("오늘 오전 11시 20분에 드셨어요. 4시간 지났어요.", reply.speech)
+    }
+
+    @Test
+    fun `기록이 반복돼 주기가 보이면 다음 알림 대신 주기 알림을 제안한다`() = runTest {
+        givenDosesEvery4Hours(addMedicine("생리통약"))
+
+        val reply = conversation.reply(VoiceIntent.RecordDose("생리통약"))
+
+        assertEquals("복약 기록을 체크했어요. 최근 4시간마다 드셨네요. 4시간마다 알려드릴까요?", reply.speech)
+        assertTrue(reply.keepListening)
+    }
+
+    @Test
+    fun `주기 제안에 응이라고 하면 주기 알림을 만든다`() = runTest {
+        val id = addMedicine("생리통약")
+        givenDosesEvery4Hours(id)
+        conversation.reply(VoiceIntent.RecordDose("생리통약"))
+
+        val reply = conversation.reply(VoiceIntent.Answer(yes = true))
+
+        assertEquals("4시간마다 알려드릴게요. 첫 알림은 오후 3시 20분이에요.", reply.speech)
+        assertFalse(reply.keepListening)
+        val interval = medicines.reminders.single { it.schedule is ReminderSchedule.Interval }
+        assertEquals(Duration.ofHours(4), (interval.schedule as ReminderSchedule.Interval).interval)
+        assertEquals(Instant.parse("2026-11-20T06:20:00Z"), alarmScheduler.scheduled[interval.id])
+    }
+
+    @Test
+    fun `주기 제안에 아니라고 하면 거절을 기억해 다시 제안하지 않는다`() = runTest {
+        val id = addMedicine("생리통약")
+        givenDosesEvery4Hours(id)
+        conversation.reply(VoiceIntent.RecordDose("생리통약"))
+
+        val reply = conversation.reply(VoiceIntent.Answer(yes = false))
+
+        assertEquals("알겠어요. 이 약은 다시 제안하지 않을게요.", reply.speech)
+        assertTrue(medicines.reminders.none { it.schedule is ReminderSchedule.Interval })
+        assertEquals("복약 기록을 체크했어요. 다음에 언제 알려드릴까요?", conversation.reply(VoiceIntent.RecordDose("생리통약")).speech)
     }
 
     @Test
@@ -153,6 +198,13 @@ class VoiceConversationTest {
 
         assertEquals("잘 못 알아들었어요. 다시 말씀해 주세요.", reply.speech)
         assertTrue(reply.keepListening)
+    }
+
+    // 4시간 간격으로 먹어 온 기록 셋을 미리 쌓는다. 지금 먹으면 넷째라 주기가 보인다.
+    private suspend fun givenDosesEvery4Hours(medicineId: Long) {
+        listOf(12L, 8L, 4L).forEach { hoursAgo ->
+            doseRecords.add(DoseRecord(0, medicineId, now.minusSeconds(hoursAgo * 3600)))
+        }
     }
 
     private suspend fun addMedicine(name: String): Long = medicines.addWithReminder(

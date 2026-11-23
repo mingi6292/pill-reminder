@@ -4,8 +4,11 @@ import app.cash.turbine.test
 import com.mg.pillreminder.domain.model.Medicine
 import com.mg.pillreminder.domain.model.Reminder
 import com.mg.pillreminder.domain.model.ReminderSchedule
+import com.mg.pillreminder.domain.usecase.AcceptIntervalSuggestionUseCase
+import com.mg.pillreminder.domain.usecase.GetIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.GetLastDoseUseCase
 import com.mg.pillreminder.domain.usecase.RecordDoseUseCase
+import com.mg.pillreminder.domain.usecase.RejectIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
 import com.mg.pillreminder.domain.voice.ListenResult
 import com.mg.pillreminder.domain.voice.VoiceConversation
@@ -126,9 +129,12 @@ class VoiceViewModelTest {
         val conversation = Provider {
             VoiceConversation(
                 medicines,
-                RecordDoseUseCase(medicines, doseRecords, clock),
+                RecordDoseUseCase(medicines, doseRecords, medicines.reminderRepository, FakeAlarmScheduler(), clock),
                 ScheduleOnceReminderUseCase(medicines, medicines.reminderRepository, FakeAlarmScheduler(), clock),
                 GetLastDoseUseCase(medicines, doseRecords),
+                GetIntervalSuggestionUseCase(medicines, medicines.reminderRepository, doseRecords),
+                AcceptIntervalSuggestionUseCase(medicines, medicines.reminderRepository, doseRecords, FakeAlarmScheduler(), clock),
+                RejectIntervalSuggestionUseCase(medicines),
                 clock,
             )
         }
