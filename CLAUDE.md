@@ -39,7 +39,7 @@
 - [x] F3-2 마지막 복용 조회 (`GetLastDoseUseCase`, 약 목록에 마지막 복용 표시)
 - [x] F3-3 "N시간 뒤" 1회 알림 (`ScheduleOnceReminderUseCase`, 목록 "나중에 알림", 알림 "1시간 뒤" 버튼)
 - [x] F3-4 주기 제안 (`RecurringIntervalDetector`, 목록 제안 배너, Room v3 거절 컬럼)
-- [x] 음성 대화 F4 (`VoiceConversation`, Gemini 해석, SpeechRecognizer·TTS, 마이크 시트와 `pillreminder://voice` 진입점, 주기 제안 연결). 실기기 검증은 아직
+- [x] 음성 대화 F4 (SpeechRecognizer + Gemini + TTS, 입구 3종: 마이크 시트, 앱 아이콘 바로가기, `pillreminder://voice`). 실기기 검증은 아직 → [docs/manual-test-voice.md](docs/manual-test-voice.md)
 
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`

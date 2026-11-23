@@ -34,10 +34,10 @@
 - F3-4 주기 제안: 복용 간격이 반복되면 주기 알림을 제안 (규칙은 5장). 약 목록의 약 행 아래에 "N시간마다 알림 받을까요? [괜찮아요] [받기]" 배너를 띄운다. 수락하면 Interval 알림을 만들고(`AcceptIntervalSuggestionUseCase`), 거절하면 기록한다(`RejectIntervalSuggestionUseCase`). 제안 여부(`GetIntervalSuggestionUseCase`)는 목록 Flow에 합쳐 기록이 바뀔 때마다 다시 계산한다
 
 ### R4. 음성 대화 (2차)
-- F4-1 입구: 빅스비 빠른 명령어로 앱 열기 → 바로 듣기 시작 / 앱 안 마이크 버튼 / 기본 디지털 어시스턴트 지정
-- F4-2 음성 인식: `SpeechRecognizer` (한국어)
+- F4-1 입구: 앱 안 마이크 버튼(음성 시트) / 앱 아이콘 바로가기 "음성으로 말하기" / 딥링크 `pillreminder://voice`(extra `START_VOICE`도 같음). 빅스비 빠른 명령어는 앱 열기만 지정할 수 있고 바로 듣기까지는 실기기 검증 전. 기본 디지털 어시스턴트 지정은 `VoiceInteractionService`가 필요해 미구현
+- F4-2 음성 인식: `SpeechRecognizer` (`ko-KR`, 12초 안에 말이 없으면 "못 들었어요")
 - F4-3 의도 해석: LLM API로 문장을 `Intent`(아래)로 변환
-- F4-4 음성 응답: `TextToSpeech`
+- F4-4 음성 응답: `TextToSpeech`(한국어). 한국어 음성이 없으면 소리 없이 넘어가고 같은 문구가 화면에 보인다
 - F4-5 이어지는 대화: 기록 후 "다음에 언제 알려드릴까요?" 질문
 
 ### R5. 외부 AI 에이전트 연동 (3차)
@@ -57,9 +57,11 @@ com.mg.pillreminder
 ├─ data/            Room (Entity, Dao, Database), Repository 구현
 ├─ alarm/           AlarmScheduler(AlarmManager 래퍼), AlarmReceiver, BootReceiver
 ├─ notification/    채널 생성, 알림 표시
-├─ voice/           (2차) SpeechRecognizer, LLM 클라이언트, TTS
+│  └─ voice/        VoiceIntent, VoiceConversation(UseCase 연결), VoiceReply, SpeechListener·SpeechSpeaker·VoiceIntentParser 인터페이스
+├─ voice/           Android 구현. AndroidSpeechListener(SpeechRecognizer), AndroidSpeechSpeaker(TextToSpeech)
+│  └─ gemini/       GeminiApi(Retrofit), GeminiVoiceIntentParser, 요청·응답 DTO, 프롬프트·JSON 스키마
 ├─ appfunctions/    (3차) AppFunction 선언
-├─ ui/              Compose 화면, ViewModel
+├─ ui/              Compose 화면, ViewModel (ui/voice: VoiceSheet, VoiceViewModel)
 └─ di/              Hilt 모듈
 ```
 
@@ -148,7 +150,7 @@ sealed interface VoiceIntent {
 대화 예시
 1. "생리통약 먹었어" → `RecordDose("생리통약")` → "복약 기록을 체크했어요. 다음에 언제 알려드릴까요?"
 2. "4시간 뒤에" → `ScheduleAfter(null, 240)` → 직전 대화의 약으로 예약 → "4시간 뒤 오후 3시 20분에 알려드릴게요."
-. 기록이 반복돼 주기가 보이면 1번 응답 대신 "최근 4시간마다 드셨네요. 4시간마다 알려드릴까요?" → "응" → `Answer(true)` → 주기 알림 수락 / "아니" → `Answer(false)` → 영구 거절
+3. 기록이 반복돼 주기가 보이면 1번 응답 대신 "최근 4시간마다 드셨네요. 4시간마다 알려드릴까요?" → "응" → `Answer(true)` → 주기 알림 수락 / "아니" → `Answer(false)` → 영구 거절
 
 등록되지 않은 약 이름이면 새로 등록할지 묻는다. "응"이라고 하면 이름을 채운 등록 시트를 열고, 복용 시각은 화면에서 고른다.
 

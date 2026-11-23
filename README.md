@@ -82,13 +82,13 @@ git push origin v0.2.0
 
 ```
 com.mg.pillreminder
-├─ domain/        순수 Kotlin: 모델, UseCase, ReminderTimeCalculator, 인터페이스(AlarmScheduler, PermissionChecker)
+├─ domain/        순수 Kotlin: 모델, UseCase, ReminderTimeCalculator, 음성 대화(domain/voice), 인터페이스(AlarmScheduler, PermissionChecker)
 ├─ data/          Room, Repository 구현
 ├─ alarm/         AlarmManager 예약, AlarmReceiver, BootReceiver, ExactAlarmPermissionReceiver
 ├─ notification/  알림 채널과 표시
 ├─ permission/    권한 상태 읽기, 설정 화면 Intent
-├─ voice/         Gemini 클라이언트, SpeechRecognizer·TextToSpeech 래퍼
-├─ ui/            Compose 화면과 ViewModel
+├─ voice/         SpeechRecognizer·TextToSpeech 구현, Gemini 클라이언트(voice/gemini)
+├─ ui/            Compose 화면과 ViewModel (음성 시트는 ui/voice)
 └─ di/            Hilt 모듈
 ```
 
@@ -103,6 +103,6 @@ Kotlin · Jetpack Compose · Material 3 · Hilt · Room · Coroutines/Flow · Al
 - [x] 알림·정확한 알람 권한 처리
 - [x] 단위 테스트
 - [x] GitHub Actions CI, 태그 기반 릴리스 배포
-- [ ] 복용 기록, "N시간 뒤 알려줘" (2차)
-- [x] 앱 자체 음성 대화: SpeechRecognizer + Gemini + TTS
+- [x] 복용 기록, 마지막 복용 조회, "N시간 뒤" 알림, 주기 제안 (2차)
+- [x] 앱 자체 음성 대화: SpeechRecognizer + Gemini + TTS (실기기 검증 전, [체크리스트](docs/manual-test-voice.md))
 - [ ] AppFunctions로 핵심 기능 노출 (3차)
