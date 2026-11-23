@@ -2,10 +2,14 @@ package com.mg.pillreminder.ui.medicine
 
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import com.mg.pillreminder.domain.model.DoseRecord
 import com.mg.pillreminder.domain.permission.PermissionStatus
+import com.mg.pillreminder.domain.usecase.AcceptIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
+import com.mg.pillreminder.domain.usecase.GetIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
+import com.mg.pillreminder.domain.usecase.RejectIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
 import com.mg.pillreminder.fake.DefaultTimeZoneRule
 import com.mg.pillreminder.fake.FakeAlarmScheduler
@@ -42,6 +46,7 @@ class MedicineViewModelTest {
     val timeZoneRule = DefaultTimeZoneRule(ZoneOffset.UTC)
 
     private val repository = FakeMedicineRepository()
+    private val doseRecordRepository = FakeDoseRecordRepository()
     private val alarmScheduler = FakeAlarmScheduler()
     private val permissionChecker = FakePermissionChecker()
     private val clock = Clock.fixed(Instant.parse("2026-11-16T00:00:00Z"), ZoneOffset.UTC)
@@ -51,10 +56,22 @@ class MedicineViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         viewModel = MedicineViewModel(
-            ObserveMedicinesUseCase(repository, FakeDoseRecordRepository()),
+            ObserveMedicinesUseCase(
+                repository,
+                doseRecordRepository,
+                GetIntervalSuggestionUseCase(repository, repository.reminderRepository, doseRecordRepository),
+            ),
             AddDailyMedicineUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
             DeleteMedicineUseCase(repository, repository.reminderRepository, alarmScheduler),
             ScheduleOnceReminderUseCase(repository, repository.reminderRepository, alarmScheduler, clock),
+            AcceptIntervalSuggestionUseCase(
+                repository,
+                repository.reminderRepository,
+                doseRecordRepository,
+                alarmScheduler,
+                clock,
+            ),
+            RejectIntervalSuggestionUseCase(repository),
             permissionChecker,
         )
     }
@@ -105,13 +122,39 @@ class MedicineViewModelTest {
         viewModel.addMedicine("비타민", LocalTime.of(8, 0))
         val medicineId = repository.medicines.single().id
 
-        viewModel.remindLaterScheduled.test {
+        viewModel.reminderScheduled.test {
             viewModel.remindLater(medicineId, Duration.ofHours(2))
 
             assertEquals(Instant.parse("2026-11-16T02:00:00Z"), awaitItem())
         }
         val item = viewModel.uiState.first { !it.isLoading }.medicines.single()
         assertEquals(Instant.parse("2026-11-16T02:00:00Z"), item.nextReminderAt)
+    }
+
+    @Test
+    fun `주기 제안을 받으면 첫 알림 시각을 알리고 제안이 사라진다`() = runTest {
+        val medicineId = addMedicineTakenEvery4Hours()
+
+        viewModel.reminderScheduled.test {
+            viewModel.acceptIntervalSuggestion(medicineId, Duration.ofHours(4))
+
+            assertEquals(Instant.parse("2026-11-16T02:00:00Z"), awaitItem())
+        }
+        val item = viewModel.uiState.first { !it.isLoading }.medicines.single()
+        assertNull(item.suggestedInterval)
+    }
+
+    @Test
+    fun `주기 제안을 거절하면 제안이 사라진다`() = runTest {
+        val medicineId = addMedicineTakenEvery4Hours()
+
+        viewModel.uiState.test {
+            assertEquals(Duration.ofHours(4), awaitLoaded().medicines.single().suggestedInterval)
+
+            viewModel.rejectIntervalSuggestion(medicineId)
+
+            assertNull(awaitItem().medicines.single().suggestedInterval)
+        }
     }
 
     @Test
@@ -161,6 +204,17 @@ class MedicineViewModelTest {
 
             assertNull(awaitItem().permissionBanner)
         }
+    }
+
+    // 전날 10:00부터 4시간마다 4번 먹었다. 마지막은 22:00이라 다음 주기는 오늘 02:00.
+    private suspend fun addMedicineTakenEvery4Hours(): Long {
+        viewModel.addMedicine("진통제", LocalTime.of(8, 0))
+        val medicineId = repository.medicines.single().id
+        repeat(4) { index ->
+            val takenAt = Instant.parse("2026-11-15T10:00:00Z").plus(Duration.ofHours(4L * index))
+            doseRecordRepository.add(DoseRecord(id = 0, medicineId = medicineId, takenAt = takenAt))
+        }
+        return medicineId
     }
 
     private suspend fun ReceiveTurbine<MedicineUiState>.awaitLoaded(): MedicineUiState {

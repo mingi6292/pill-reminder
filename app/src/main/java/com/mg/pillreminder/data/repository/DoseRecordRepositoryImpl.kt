@@ -19,6 +19,9 @@ class DoseRecordRepositoryImpl @Inject constructor(
     override suspend fun findLatest(medicineIds: List<Long>): DoseRecord? =
         if (medicineIds.isEmpty()) null else doseRecordDao.findLatest(medicineIds)?.toDomain()
 
+    override suspend fun findRecentTakenAt(medicineId: Long, limit: Int): List<Instant> =
+        doseRecordDao.findRecentTakenAt(medicineId, limit).map(Instant::ofEpochMilli)
+
     override fun observeLastTakenAt(): Flow<Map<Long, Instant>> = doseRecordDao.observeLastTakenAt().map { rows ->
         rows.associate { it.medicineId to Instant.ofEpochMilli(it.takenAt) }
     }

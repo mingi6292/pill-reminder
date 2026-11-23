@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.mg.pillreminder.domain.model.MedicineOverview
 import com.mg.pillreminder.domain.permission.PermissionChecker
 import com.mg.pillreminder.domain.permission.PermissionStatus
+import com.mg.pillreminder.domain.usecase.AcceptIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.AddDailyMedicineUseCase
 import com.mg.pillreminder.domain.usecase.DeleteMedicineUseCase
 import com.mg.pillreminder.domain.usecase.ObserveMedicinesUseCase
+import com.mg.pillreminder.domain.usecase.RejectIntervalSuggestionUseCase
 import com.mg.pillreminder.domain.usecase.ScheduleOnceReminderUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -30,6 +32,8 @@ class MedicineViewModel @Inject constructor(
     private val addDailyMedicine: AddDailyMedicineUseCase,
     private val deleteMedicineUseCase: DeleteMedicineUseCase,
     private val scheduleOnceReminder: ScheduleOnceReminderUseCase,
+    private val acceptIntervalSuggestionUseCase: AcceptIntervalSuggestionUseCase,
+    private val rejectIntervalSuggestionUseCase: RejectIntervalSuggestionUseCase,
     private val permissionChecker: PermissionChecker,
 ) : ViewModel() {
 
@@ -47,10 +51,10 @@ class MedicineViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), MedicineUiState())
 
     // 안내는 한 번만 보여야 해서 상태가 아니라 이벤트로 낸다. 화면이 잠깐 구독을 끊어도 Channel이 들고 있는다.
-    private val remindLaterEvents = Channel<Instant>(Channel.BUFFERED)
+    private val reminderScheduledEvents = Channel<Instant>(Channel.BUFFERED)
 
-    /** "나중에 알림"이 예약된 시각. 화면이 안내 문구로 보여 준다. */
-    val remindLaterScheduled: Flow<Instant> = remindLaterEvents.receiveAsFlow()
+    /** "나중에 알림"이나 주기 알림의 첫 알림 시각. 화면이 안내 문구로 보여 준다. */
+    val reminderScheduled: Flow<Instant> = reminderScheduledEvents.receiveAsFlow()
 
     /** 설정 화면이나 권한 요청에서 돌아왔을 때 부른다. */
     fun refreshPermissions() {
@@ -78,8 +82,18 @@ class MedicineViewModel @Inject constructor(
 
     fun remindLater(medicineId: Long, after: Duration) {
         viewModelScope.launch {
-            scheduleOnceReminder(medicineId, after)?.let { remindLaterEvents.send(it) }
+            scheduleOnceReminder(medicineId, after)?.let { reminderScheduledEvents.send(it) }
         }
+    }
+
+    fun acceptIntervalSuggestion(medicineId: Long, interval: Duration) {
+        viewModelScope.launch {
+            acceptIntervalSuggestionUseCase(medicineId, interval)?.let { reminderScheduledEvents.send(it) }
+        }
+    }
+
+    fun rejectIntervalSuggestion(medicineId: Long) {
+        viewModelScope.launch { rejectIntervalSuggestionUseCase(medicineId) }
     }
 
     private fun toUiState(
@@ -101,6 +115,7 @@ class MedicineViewModel @Inject constructor(
         name = medicine.name,
         nextReminderAt = nextTriggerAt,
         lastTakenAt = lastTakenAt,
+        suggestedInterval = suggestedInterval,
     )
 
     private companion object {

@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -71,6 +72,16 @@ class RescheduleAllRemindersUseCaseTest {
     fun `1회 알림은 저장된 시각 그대로 예약한다`() = runTest {
         val at = seoul("2026-11-16T12:00")
         val reminderId = save("진통제", ReminderSchedule.Once, at)
+
+        useCase()
+
+        assertEquals(at, alarmScheduler.scheduled[reminderId])
+    }
+
+    @Test
+    fun `주기 알림은 저장된 시각 그대로 예약한다`() = runTest {
+        val at = seoul("2026-11-16T11:00")
+        val reminderId = save("진통제", ReminderSchedule.Interval(Duration.ofHours(4)), at)
 
         useCase()
 

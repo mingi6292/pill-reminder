@@ -25,5 +25,8 @@ class MedicineRepositoryImpl @Inject constructor(
     override suspend fun addWithReminder(medicine: Medicine, reminder: Reminder): Long =
         medicineDao.insertWithReminder(medicine.toEntity(), reminder.toEntity())
 
+    override suspend fun dismissIntervalSuggestion(medicineId: Long) =
+        medicineDao.dismissIntervalSuggestion(medicineId)
+
     override suspend fun delete(medicineId: Long) = medicineDao.deleteById(medicineId)
 }

@@ -38,6 +38,26 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate2To3_keepsMedicinesAsNotDismissed() {
+        helper.createDatabase(DB_NAME, 2).use { db ->
+            db.execSQL("INSERT INTO medicines (id, name, createdAt) VALUES (1, '진통제', 0)")
+            db.execSQL("INSERT INTO dose_records (id, medicineId, takenAt) VALUES (1, 1, 0)")
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 3, true, MIGRATION_2_3).use { db ->
+            db.query("SELECT name, intervalSuggestionDismissed FROM medicines").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("진통제", cursor.getString(0))
+                assertEquals(0, cursor.getInt(1))
+            }
+            db.query("SELECT COUNT(*) FROM dose_records").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(1, cursor.getInt(0))
+            }
+        }
+    }
+
+    @Test
     fun migratedDatabase_opensWithCurrentSchema() {
         helper.createDatabase(DB_NAME, 1).close()
 

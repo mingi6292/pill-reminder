@@ -51,6 +51,14 @@ class FakeMedicineRepository : MedicineRepository {
         return medicineId
     }
 
+    override suspend fun dismissIntervalSuggestion(medicineId: Long) = state.update { current ->
+        current.copy(
+            medicines = current.medicines.map {
+                if (it.id == medicineId) it.copy(intervalSuggestionDismissed = true) else it
+            },
+        )
+    }
+
     override suspend fun delete(medicineId: Long) = state.update { current ->
         current.copy(
             medicines = current.medicines.filterNot { it.id == medicineId },
