@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -27,7 +28,8 @@ class AndroidSpeechListener @Inject constructor(
         when {
             !hasRecordAudioPermission() -> ListenResult.PermissionDenied
             !SpeechRecognizer.isRecognitionAvailable(context) -> ListenResult.Unavailable
-            else -> recognizeOnce()
+            // 주변 소음이 있으면 인식기가 끝을 못 찾고 계속 기다린다. 사용자가 다시 누르게 시간 제한을 둔다.
+            else -> withTimeoutOrNull(LISTEN_TIMEOUT_MILLIS) { recognizeOnce() } ?: ListenResult.NoSpeech
         }
     }
 
@@ -82,5 +84,6 @@ class AndroidSpeechListener @Inject constructor(
 
     private companion object {
         const val LANGUAGE_TAG = "ko-KR"
+        const val LISTEN_TIMEOUT_MILLIS = 12_000L
     }
 }
