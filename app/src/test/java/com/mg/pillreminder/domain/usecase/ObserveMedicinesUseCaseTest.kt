@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 
@@ -18,7 +19,31 @@ class ObserveMedicinesUseCaseTest {
 
     private val medicineRepository = FakeMedicineRepository()
     private val doseRecordRepository = FakeDoseRecordRepository()
-    private val useCase = ObserveMedicinesUseCase(medicineRepository, doseRecordRepository)
+    private val useCase = ObserveMedicinesUseCase(
+        medicineRepository,
+        doseRecordRepository,
+        GetIntervalSuggestionUseCase(medicineRepository, medicineRepository.reminderRepository, doseRecordRepository),
+    )
+
+    @Test
+    fun `같은 간격으로 4번 기록하면 제안이 붙고 거절하면 사라진다`() = runTest {
+        val medicineId = medicineRepository.addWithReminder(medicine("진통제"), reminder(NEXT))
+        repeat(3) { recordAt(medicineId, TAKEN + Duration.ofHours(4L * it)) }
+
+        useCase().test {
+            assertNull(awaitItem().single().suggestedInterval)
+
+            recordAt(medicineId, TAKEN + Duration.ofHours(12))
+            assertEquals(Duration.ofHours(4), awaitItem().single().suggestedInterval)
+
+            RejectIntervalSuggestionUseCase(medicineRepository)(medicineId)
+            assertNull(awaitItem().single().suggestedInterval)
+        }
+    }
+
+    private suspend fun recordAt(medicineId: Long, takenAt: Instant) {
+        doseRecordRepository.add(DoseRecord(id = 0, medicineId = medicineId, takenAt = takenAt))
+    }
 
     @Test
     fun `저장된 약과 다음 알림 시각을 흘려보낸다`() = runTest {

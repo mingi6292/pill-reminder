@@ -28,6 +28,9 @@ interface MedicineDao {
     @Query("SELECT * FROM medicines WHERE id = :medicineId")
     suspend fun findById(medicineId: Long): MedicineEntity?
 
+    @Query("UPDATE medicines SET intervalSuggestionDismissed = 1 WHERE id = :medicineId")
+    suspend fun dismissIntervalSuggestion(medicineId: Long)
+
     @Query("DELETE FROM medicines WHERE id = :medicineId")
     suspend fun deleteById(medicineId: Long)
 

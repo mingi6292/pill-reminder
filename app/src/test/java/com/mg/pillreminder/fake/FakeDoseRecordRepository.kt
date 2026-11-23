@@ -25,6 +25,12 @@ class FakeDoseRecordRepository : DoseRecordRepository {
         .filter { it.medicineId in medicineIds }
         .maxWithOrNull(compareBy<DoseRecord> { it.takenAt }.thenBy { it.id })
 
+    override suspend fun findRecentTakenAt(medicineId: Long, limit: Int): List<Instant> = records
+        .filter { it.medicineId == medicineId }
+        .sortedWith(compareByDescending<DoseRecord> { it.takenAt }.thenByDescending { it.id })
+        .take(limit)
+        .map { it.takenAt }
+
     override fun observeLastTakenAt(): Flow<Map<Long, Instant>> = state.map { list ->
         list.groupBy { it.medicineId }.mapValues { (_, records) -> records.maxOf { it.takenAt } }
     }

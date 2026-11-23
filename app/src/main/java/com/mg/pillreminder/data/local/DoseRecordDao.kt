@@ -21,6 +21,16 @@ interface DoseRecordDao {
     )
     suspend fun findLatest(medicineIds: List<Long>): DoseRecordEntity?
 
+    @Query(
+        """
+        SELECT takenAt FROM dose_records
+        WHERE medicineId = :medicineId
+        ORDER BY takenAt DESC, id DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun findRecentTakenAt(medicineId: Long, limit: Int): List<Long>
+
     @Query("SELECT medicineId, MAX(takenAt) AS takenAt FROM dose_records GROUP BY medicineId")
     fun observeLastTakenAt(): Flow<List<LastTakenRow>>
 }

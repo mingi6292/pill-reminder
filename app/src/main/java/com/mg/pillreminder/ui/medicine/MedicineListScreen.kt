@@ -59,7 +59,7 @@ fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
-        viewModel.remindLaterScheduled.collect { triggerAt ->
+        viewModel.reminderScheduled.collect { triggerAt ->
             val formatted = formatShortDateTime(triggerAt, Instant.now(), ZoneId.systemDefault())
             snackbarHostState.showSnackbar(resources.getString(R.string.medicine_remind_later_scheduled, formatted))
         }
@@ -82,6 +82,8 @@ fun MedicineListScreen(viewModel: MedicineViewModel = hiltViewModel()) {
         },
         onDeleteMedicine = viewModel::deleteMedicine,
         onRemindLater = viewModel::remindLater,
+        onAcceptInterval = viewModel::acceptIntervalSuggestion,
+        onRejectInterval = viewModel::rejectIntervalSuggestion,
         onPermissionBannerClick = permissionActions::resolve,
     )
 }
@@ -94,6 +96,8 @@ fun MedicineListContent(
     onAddMedicine: (name: String, time: LocalTime) -> Unit,
     onDeleteMedicine: (medicineId: Long) -> Unit,
     onRemindLater: (medicineId: Long, after: Duration) -> Unit,
+    onAcceptInterval: (medicineId: Long, interval: Duration) -> Unit,
+    onRejectInterval: (medicineId: Long) -> Unit,
     onPermissionBannerClick: (PermissionBanner) -> Unit,
 ) {
     var showAddSheet by rememberSaveable { mutableStateOf(false) }
@@ -117,6 +121,8 @@ fun MedicineListContent(
                 uiState = uiState,
                 onDeleteMedicine = onDeleteMedicine,
                 onRemindLater = onRemindLater,
+                onAcceptInterval = onAcceptInterval,
+                onRejectInterval = onRejectInterval,
                 contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding()),
             )
         }
@@ -138,6 +144,8 @@ private fun MedicineListBody(
     uiState: MedicineUiState,
     onDeleteMedicine: (Long) -> Unit,
     onRemindLater: (Long, Duration) -> Unit,
+    onAcceptInterval: (Long, Duration) -> Unit,
+    onRejectInterval: (Long) -> Unit,
     contentPadding: PaddingValues,
 ) {
     val centered = Modifier
@@ -152,11 +160,20 @@ private fun MedicineListBody(
         }
         else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = contentPadding) {
             items(uiState.medicines, key = { it.id }) { medicine ->
-                MedicineRow(
-                    medicine = medicine,
-                    onDelete = { onDeleteMedicine(medicine.id) },
-                    onRemindLater = { after -> onRemindLater(medicine.id, after) },
-                )
+                Column {
+                    MedicineRow(
+                        medicine = medicine,
+                        onDelete = { onDeleteMedicine(medicine.id) },
+                        onRemindLater = { after -> onRemindLater(medicine.id, after) },
+                    )
+                    medicine.suggestedInterval?.let { interval ->
+                        IntervalSuggestionBanner(
+                            interval = interval,
+                            onAccept = { onAcceptInterval(medicine.id, interval) },
+                            onReject = { onRejectInterval(medicine.id) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -228,6 +245,13 @@ private fun MedicineListContentPreview() {
                 medicines = listOf(
                     MedicineItem(1, "비타민", Instant.parse("2026-11-16T23:00:00Z"), Instant.parse("2026-11-15T23:05:00Z")),
                     MedicineItem(2, "유산균", null),
+                    MedicineItem(
+                        id = 3,
+                        name = "진통제",
+                        nextReminderAt = null,
+                        lastTakenAt = Instant.parse("2026-11-16T03:00:00Z"),
+                        suggestedInterval = Duration.ofHours(4),
+                    ),
                 ),
                 permissionBanner = PermissionBanner.ExactAlarm,
             ),
@@ -235,6 +259,8 @@ private fun MedicineListContentPreview() {
             onAddMedicine = { _, _ -> },
             onDeleteMedicine = {},
             onRemindLater = { _, _ -> },
+            onAcceptInterval = { _, _ -> },
+            onRejectInterval = {},
             onPermissionBannerClick = {},
         )
     }

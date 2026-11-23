@@ -16,6 +16,11 @@
     <string name="medicine_remind_later">나중에 알림</string>
     <string name="medicine_remind_after_hours">%1$d시간 뒤</string>
     <string name="medicine_remind_later_scheduled">%1$s에 다시 알려드릴게요</string>
+    <string name="interval_suggestion_message">%1$s마다 알림 받을까요?</string>
+    <string name="interval_suggestion_accept">받기</string>
+    <string name="interval_suggestion_reject">괜찮아요</string>
+    <string name="interval_hours">%1$d시간</string>
+    <string name="interval_hours_minutes">%1$d시간 %2$d분</string>
     <string name="permission_notification_title">알림이 꺼져 있어요</string>
     <string name="permission_notification_message">약 드실 시간을 알려드리려면 알림을 허용해 주세요. 눌러서 허용하기</string>
     <string name="permission_exact_alarm_title">알림이 늦게 울릴 수 있어요</string>

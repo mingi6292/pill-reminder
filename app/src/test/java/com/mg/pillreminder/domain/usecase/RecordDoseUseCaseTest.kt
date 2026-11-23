@@ -4,6 +4,7 @@ import com.mg.pillreminder.domain.model.DoseRecord
 import com.mg.pillreminder.domain.model.Medicine
 import com.mg.pillreminder.domain.model.Reminder
 import com.mg.pillreminder.domain.model.ReminderSchedule
+import com.mg.pillreminder.fake.FakeAlarmScheduler
 import com.mg.pillreminder.fake.FakeDoseRecordRepository
 import com.mg.pillreminder.fake.FakeMedicineRepository
 import kotlinx.coroutines.test.runTest
@@ -12,6 +13,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -20,8 +22,39 @@ class RecordDoseUseCaseTest {
 
     private val medicineRepository = FakeMedicineRepository()
     private val doseRecordRepository = FakeDoseRecordRepository()
+    private val alarmScheduler = FakeAlarmScheduler()
     private val now = Instant.parse("2026-11-18T02:20:00Z")
-    private val useCase = RecordDoseUseCase(medicineRepository, doseRecordRepository, Clock.fixed(now, ZoneOffset.UTC))
+    private val useCase = RecordDoseUseCase(
+        medicineRepository,
+        doseRecordRepository,
+        medicineRepository.reminderRepository,
+        alarmScheduler,
+        Clock.fixed(now, ZoneOffset.UTC),
+    )
+
+    @Test
+    fun `주기 알림은 먹은 시각부터 다시 세어 예약한다`() = runTest {
+        val medicineId = addMedicine("진통제")
+        val intervalId = medicineRepository.reminderRepository.add(
+            Reminder(0, medicineId, ReminderSchedule.Interval(Duration.ofHours(4)), Instant.parse("2026-11-18T03:00:00Z")),
+        )
+
+        useCase(medicineId)
+
+        val expected = Instant.parse("2026-11-18T06:20:00Z")
+        assertEquals(expected, medicineRepository.reminders.single { it.id == intervalId }.nextTriggerAt)
+        assertEquals(mapOf(intervalId to expected), alarmScheduler.scheduled)
+    }
+
+    @Test
+    fun `매일 알림은 건드리지 않는다`() = runTest {
+        val medicineId = addMedicine("비타민")
+
+        useCase(medicineId)
+
+        assertEquals(Instant.EPOCH, medicineRepository.reminders.single().nextTriggerAt)
+        assertTrue(alarmScheduler.scheduled.isEmpty())
+    }
 
     @Test
     fun `지금 시각으로 기록하고 저장한 기록을 돌려준다`() = runTest {
