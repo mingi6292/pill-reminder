@@ -40,9 +40,9 @@
 - F4-4 음성 응답: `TextToSpeech`(한국어). 한국어 음성이 없으면 소리 없이 넘어가고 같은 문구가 화면에 보인다
 - F4-5 이어지는 대화: 기록 후 "다음에 언제 알려드릴까요?" 질문
 
-### R5. 외부 AI 에이전트 연동 (3차)
+### R5. 외부 AI 에이전트 연동
 - F5-1 `recordDose`, `getLastDose`, `scheduleReminderAfter`를 `@AppFunctionDeclaration`으로 노출
-- F5-2 ADB와 테스트 에이전트(github.com/android/appfunctions)로 검증
+- F5-2 ADB로 인덱싱과 실행을 검증한다. Gemini 호출은 Connected Apps Platform 프리뷰 신청이 필요해 범위 밖
 
 ## 3. 구조
 
@@ -60,7 +60,7 @@ com.mg.pillreminder
 │  └─ voice/        VoiceIntent, VoiceConversation(UseCase 연결), VoiceReply, SpeechListener·SpeechSpeaker·VoiceIntentParser 인터페이스
 ├─ voice/           Android 구현. AndroidSpeechListener(SpeechRecognizer), AndroidSpeechSpeaker(TextToSpeech)
 │  └─ gemini/       GeminiApi(Retrofit), GeminiVoiceIntentParser, 요청·응답 DTO, 프롬프트·JSON 스키마
-├─ appfunctions/    (3차) AppFunction 선언
+├─ appfunctions/    AppFunction 선언(PillAppFunctionService), 변환·오류 구분(PillAppFunctionHandler)
 ├─ ui/              Compose 화면, ViewModel (ui/voice: VoiceSheet, VoiceViewModel)
 └─ di/              Hilt 모듈
 ```

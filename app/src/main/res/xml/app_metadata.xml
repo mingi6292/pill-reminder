@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AppFunctionAppMetadata xmlns:appfn="http://schemas.android.com/apk/androidx.appfunctions"
+    appfn:description="Medication reminder app. Records when the user took a medicine, tells when it was last taken, and schedules a one-time reminder.
+Constraints:
+  - The medicine must already be registered in the app. Unregistered names fail with an element-not-found error; ask the user to register the medicine in the app.
+  - Medicine names are matched exactly, ignoring spaces and letter case."
+    appfn:displayDescription="@string/app_function_display_description" />

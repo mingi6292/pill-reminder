@@ -21,7 +21,7 @@
 
 ## 일정
 - 1차 마감 11/8(일): 약 등록 화면, 매일 정해진 시각 알림, 단위 테스트, GitHub Actions CI, README
-- 음성 대화와 AppFunctions는 2차 이후
+- 음성 대화는 2차, AppFunctions는 3차에서 구현
 
 ## 진행 상황
 - [x] `android-starter` 템플릿 복사, 패키지 `com.mg.pillreminder`로 변경, minSdk 26
@@ -40,6 +40,7 @@
 - [x] F3-3 "N시간 뒤" 1회 알림 (`ScheduleOnceReminderUseCase`, 목록 "나중에 알림", 알림 "1시간 뒤" 버튼)
 - [x] F3-4 주기 제안 (`RecurringIntervalDetector`, 목록 제안 배너, Room v3 거절 컬럼)
 - [x] 음성 대화 F4 (SpeechRecognizer + Gemini + TTS, 입구 3종: 마이크 시트, 앱 아이콘 바로가기, `pillreminder://voice`). 실기기 검증은 아직 → [docs/manual-test-voice.md](docs/manual-test-voice.md)
+- [x] F5 AppFunctions (`recordDose`, `getLastDose`, `scheduleReminderAfter`, API 36+). adb 검증 완료 → [docs/manual-test-appfunctions.md](docs/manual-test-appfunctions.md). Gemini 호출은 Connected Apps Platform 프리뷰 신청 필요로 미검증
 
 ## 명령어
 - 빌드와 테스트: `./gradlew assembleDebug testDebugUnitTest`
