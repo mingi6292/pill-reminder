@@ -11,6 +11,7 @@ lifecycle = "2.11.0"
 composeBom = "2026.02.01"
 room = "2.8.5"
 paging = "3.5.2"
+appfunctions = "1.0.0"
 
 # DI
 hilt = "2.60.1"
@@ -47,6 +48,11 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+
+# AppFunctions
+androidx-appfunctions = { group = "androidx.appfunctions", name = "appfunctions", version.ref = "appfunctions" }
+androidx-appfunctions-compiler = { group = "androidx.appfunctions", name = "appfunctions-compiler", version.ref = "appfunctions" }
+androidx-appfunctions-testing = { group = "androidx.appfunctions", name = "appfunctions-testing", version.ref = "appfunctions" }
 
 # Room / Paging
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

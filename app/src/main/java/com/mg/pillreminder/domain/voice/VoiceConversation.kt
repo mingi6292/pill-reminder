@@ -102,10 +102,8 @@ class VoiceConversation @Inject constructor(
         return VoiceReply(Speech.askToRegister(name), keepListening = true)
     }
 
-    // 같은 이름을 시각별로 여러 번 등록할 수 있다. 기록과 조회는 이름 단위로 묶이니 어느 것을 골라도 되지만,
-    // 1회 알림이 약마다 하나라 매번 같은 약을 골라야 "다시 예약"이 이전 예약을 바꾼다.
     private suspend fun findMedicine(name: String): Medicine? =
-        MedicineNameMatcher.matches(name, medicineRepository.getAll()).minByOrNull { it.id }
+        MedicineNameMatcher.findFirst(name, medicineRepository.getAll())
 
     private fun now(): Instant = Instant.now(clock)
 
